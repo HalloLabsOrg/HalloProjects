@@ -9,12 +9,12 @@ Mengelola autentikasi pengguna dengan JWT.
 
 ## Endpoints
 
-| Method | Path | Description | Auth |
-|---|---|---|---|
-| `POST` | `/auth/login` | Login dengan email + password | — |
-| `POST` | `/auth/logout` | Invalidate token (client-side) | JWT |
-| `POST` | `/auth/change-password` | Ganti password | JWT |
-| `GET` | `/auth/me` | Get current user info | JWT |
+| Method | Path                    | Description                    | Auth |
+| ------ | ----------------------- | ------------------------------ | ---- |
+| `POST` | `/auth/login`           | Login dengan email + password  | —    |
+| `POST` | `/auth/logout`          | Invalidate token (client-side) | JWT  |
+| `POST` | `/auth/change-password` | Ganti password                 | JWT  |
+| `GET`  | `/auth/me`              | Get current user info          | JWT  |
 
 ## Login Flow
 

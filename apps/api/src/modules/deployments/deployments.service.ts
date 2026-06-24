@@ -7,7 +7,11 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { QUEUE_NAMES, JOB_NAMES } from '@hallo/shared';
 
-const CANCELLABLE_STATUSES: DeploymentStatus[] = [DeploymentStatus.PENDING, DeploymentStatus.BUILDING, DeploymentStatus.DEPLOYING];
+const CANCELLABLE_STATUSES: DeploymentStatus[] = [
+  DeploymentStatus.PENDING,
+  DeploymentStatus.BUILDING,
+  DeploymentStatus.DEPLOYING,
+];
 
 @Injectable()
 export class DeploymentsService {
@@ -16,7 +20,10 @@ export class DeploymentsService {
     @InjectQueue(QUEUE_NAMES.DEPLOYMENTS) private readonly deployQueue: Queue,
   ) {}
 
-  async findAll(pagination: { page: number; limit: number; search?: string }, filters?: { status?: DeploymentStatus; serviceId?: string }) {
+  async findAll(
+    pagination: { page: number; limit: number; search?: string },
+    filters?: { status?: DeploymentStatus; serviceId?: string },
+  ) {
     const where: Record<string, unknown> = {};
 
     if (filters?.status) where.status = filters.status;
@@ -71,10 +78,14 @@ export class DeploymentsService {
     });
     if (!service) throw new NotFoundException(`Service ${serviceId} not found`);
 
-    const environment = await this.prisma.environment.findUnique({ where: { id: dto.environmentId } });
+    const environment = await this.prisma.environment.findUnique({
+      where: { id: dto.environmentId },
+    });
     if (!environment) throw new NotFoundException(`Environment ${dto.environmentId} not found`);
 
-    const provider = await this.prisma.providerConnection.findUnique({ where: { id: dto.providerId } });
+    const provider = await this.prisma.providerConnection.findUnique({
+      where: { id: dto.providerId },
+    });
     if (!provider) throw new NotFoundException(`Provider ${dto.providerId} not found`);
 
     const deployment = await this.prisma.deployment.create({

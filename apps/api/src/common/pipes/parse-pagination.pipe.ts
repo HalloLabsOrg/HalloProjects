@@ -20,9 +20,7 @@ export class ParsePaginationPipe implements PipeTransform {
     }
 
     if (isNaN(limit) || limit < 1 || limit > PAGINATION_DEFAULTS.MAX_LIMIT) {
-      throw new BadRequestException(
-        `limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}`,
-      );
+      throw new BadRequestException(`limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}`);
     }
 
     const sortOrder = query['sortOrder'];

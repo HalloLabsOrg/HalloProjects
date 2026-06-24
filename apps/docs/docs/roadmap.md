@@ -300,10 +300,10 @@ sidebar_position: 14
 
 ## Summary
 
-| Version | Focus | Est. Tasks |
-|---|---|---|
-| v0.1 Alpha | Foundation: Auth, GitHub, Coolify, Projects, Deploy | ~65 tasks |
-| v0.2 | Automation: Webhooks, Auto-deploy, Live logs | ~25 tasks |
-| v0.3 | Observability: Monitoring, Env vars, Domains | ~25 tasks |
-| v0.4 | Template Engine | ~25 tasks |
-| v1.0 | Community Release: Docker, Docs, Installer, Tests | ~30 tasks |
+| Version    | Focus                                               | Est. Tasks |
+| ---------- | --------------------------------------------------- | ---------- |
+| v0.1 Alpha | Foundation: Auth, GitHub, Coolify, Projects, Deploy | ~65 tasks  |
+| v0.2       | Automation: Webhooks, Auto-deploy, Live logs        | ~25 tasks  |
+| v0.3       | Observability: Monitoring, Env vars, Domains        | ~25 tasks  |
+| v0.4       | Template Engine                                     | ~25 tasks  |
+| v1.0       | Community Release: Docker, Docs, Installer, Tests   | ~30 tasks  |

@@ -1,10 +1,6 @@
 import { PaginationQuery } from '../pipes/parse-pagination.pipe';
 
-export function paginateResponse<T>(
-  items: T[],
-  total: number,
-  pagination: PaginationQuery,
-) {
+export function paginateResponse<T>(items: T[], total: number, pagination: PaginationQuery) {
   return {
     data: items,
     meta: {

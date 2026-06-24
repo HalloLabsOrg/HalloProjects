@@ -99,11 +99,11 @@ Triggers auto-deploy jika branch match environment config
 
 ## Docker Services
 
-| Service | Image | Port | Keterangan |
-|---|---|---|---|
-| `caddy` | `caddy:2-alpine` | 80, 443 | Reverse proxy + auto HTTPS |
-| `web` | `hallolabs/hallo-projects-web` | 3000 | Next.js frontend |
-| `api` | `hallolabs/hallo-projects-api` | 4000 | NestJS REST API |
-| `worker` | `hallolabs/hallo-projects-worker` | — | Background job processor |
-| `postgres` | `postgres:15-alpine` | 5432 | Database utama |
-| `redis` | `redis:7-alpine` | 6379 | Queue & cache |
+| Service    | Image                             | Port    | Keterangan                 |
+| ---------- | --------------------------------- | ------- | -------------------------- |
+| `caddy`    | `caddy:2-alpine`                  | 80, 443 | Reverse proxy + auto HTTPS |
+| `web`      | `hallolabs/hallo-projects-web`    | 3000    | Next.js frontend           |
+| `api`      | `hallolabs/hallo-projects-api`    | 4000    | NestJS REST API            |
+| `worker`   | `hallolabs/hallo-projects-worker` | —       | Background job processor   |
+| `postgres` | `postgres:15-alpine`              | 5432    | Database utama             |
+| `redis`    | `redis:7-alpine`                  | 6379    | Queue & cache              |

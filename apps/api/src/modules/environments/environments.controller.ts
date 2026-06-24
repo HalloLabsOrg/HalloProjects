@@ -35,7 +35,12 @@ export class EnvironmentsController {
 
   @Post()
   @ApiOperation({ summary: 'Create an environment' })
-  async create(@Param('projectId') projectId: string, @Body() dto: CreateEnvironmentDto, @CurrentUser() user: User, @Req() req: Request) {
+  async create(
+    @Param('projectId') projectId: string,
+    @Body() dto: CreateEnvironmentDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const env = await this.environmentsService.create(projectId, dto);
     await this.auditLogsService.log({
       action: AuditAction.ENVIRONMENT_CREATED,
@@ -49,7 +54,13 @@ export class EnvironmentsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an environment' })
-  async update(@Param('projectId') projectId: string, @Param('id') id: string, @Body() dto: UpdateEnvironmentDto, @CurrentUser() user: User, @Req() req: Request) {
+  async update(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateEnvironmentDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const env = await this.environmentsService.update(projectId, id, dto);
     await this.auditLogsService.log({
       action: AuditAction.ENVIRONMENT_UPDATED,
@@ -63,7 +74,12 @@ export class EnvironmentsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an environment' })
-  async remove(@Param('projectId') projectId: string, @Param('id') id: string, @CurrentUser() user: User, @Req() req: Request) {
+  async remove(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     await this.environmentsService.remove(projectId, id);
     await this.auditLogsService.log({
       action: AuditAction.ENVIRONMENT_DELETED,

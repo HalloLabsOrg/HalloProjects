@@ -7,33 +7,33 @@ title: Environment Variables
 
 ## API (`apps/api`)
 
-| Variable | Required | Default | Description |
-|---|:---:|---|---|
-| `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
-| `REDIS_URL` | ✅ | — | Redis connection string |
-| `JWT_SECRET` | ✅ | — | Secret untuk signing JWT (min 32 chars) |
-| `JWT_EXPIRES_IN` | — | `24h` | JWT expiration |
-| `ENCRYPTION_KEY` | ✅ | — | Key enkripsi credentials (32 bytes hex) |
-| `PORT` | — | `4000` | Port API |
-| `GITHUB_WEBHOOK_SECRET` | — | — | Secret validasi GitHub webhooks |
-| `LOG_LEVEL` | — | `info` | `info` \| `debug` \| `error` \| `warn` |
-| `SWAGGER_ENABLED` | — | `false` | Aktifkan Swagger UI |
+| Variable                | Required | Default | Description                             |
+| ----------------------- | :------: | ------- | --------------------------------------- |
+| `DATABASE_URL`          |    ✅    | —       | PostgreSQL connection string            |
+| `REDIS_URL`             |    ✅    | —       | Redis connection string                 |
+| `JWT_SECRET`            |    ✅    | —       | Secret untuk signing JWT (min 32 chars) |
+| `JWT_EXPIRES_IN`        |    —     | `24h`   | JWT expiration                          |
+| `ENCRYPTION_KEY`        |    ✅    | —       | Key enkripsi credentials (32 bytes hex) |
+| `PORT`                  |    —     | `4000`  | Port API                                |
+| `GITHUB_WEBHOOK_SECRET` |    —     | —       | Secret validasi GitHub webhooks         |
+| `LOG_LEVEL`             |    —     | `info`  | `info` \| `debug` \| `error` \| `warn`  |
+| `SWAGGER_ENABLED`       |    —     | `false` | Aktifkan Swagger UI                     |
 
 ## Web (`apps/web`)
 
-| Variable | Required | Default | Description |
-|---|:---:|---|---|
-| `NEXT_PUBLIC_API_URL` | ✅ | — | Base URL API, e.g. `https://domain.com/api` |
+| Variable              | Required | Default | Description                                 |
+| --------------------- | :------: | ------- | ------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` |    ✅    | —       | Base URL API, e.g. `https://domain.com/api` |
 
 ## Worker (`apps/worker`)
 
-| Variable | Required | Default | Description |
-|---|:---:|---|---|
-| `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
-| `REDIS_URL` | ✅ | — | Redis connection string |
-| `HEALTH_CHECK_INTERVAL` | — | `60` | Interval health check (detik) |
-| `HEALTH_CHECK_TIMEOUT` | — | `10` | Timeout per request (detik) |
-| `DEPLOYMENT_POLL_INTERVAL` | — | `5` | Interval polling status deploy (detik) |
+| Variable                   | Required | Default | Description                            |
+| -------------------------- | :------: | ------- | -------------------------------------- |
+| `DATABASE_URL`             |    ✅    | —       | PostgreSQL connection string           |
+| `REDIS_URL`                |    ✅    | —       | Redis connection string                |
+| `HEALTH_CHECK_INTERVAL`    |    —     | `60`    | Interval health check (detik)          |
+| `HEALTH_CHECK_TIMEOUT`     |    —     | `10`    | Timeout per request (detik)            |
+| `DEPLOYMENT_POLL_INTERVAL` |    —     | `5`     | Interval polling status deploy (detik) |
 
 ## `.env.example`
 

@@ -88,17 +88,23 @@ describe('DeploymentsService', () => {
 
     it('throws NotFoundException when service not found', async () => {
       mockPrisma.service.findUnique.mockResolvedValue(null);
-      await expect(service.triggerDeploy('bad-id', dto, triggeredBy)).rejects.toThrow(NotFoundException);
+      await expect(service.triggerDeploy('bad-id', dto, triggeredBy)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when environment not found', async () => {
       mockPrisma.environment.findUnique.mockResolvedValue(null);
-      await expect(service.triggerDeploy('svc-1', dto, triggeredBy)).rejects.toThrow(NotFoundException);
+      await expect(service.triggerDeploy('svc-1', dto, triggeredBy)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when provider not found', async () => {
       mockPrisma.providerConnection.findUnique.mockResolvedValue(null);
-      await expect(service.triggerDeploy('svc-1', dto, triggeredBy)).rejects.toThrow(NotFoundException);
+      await expect(service.triggerDeploy('svc-1', dto, triggeredBy)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -106,7 +112,10 @@ describe('DeploymentsService', () => {
     it('cancels a PENDING deployment', async () => {
       const deployment = { id: 'dep-1', status: DeploymentStatus.PENDING };
       mockPrisma.deployment.findUnique.mockResolvedValue(deployment);
-      mockPrisma.deployment.update.mockResolvedValue({ ...deployment, status: DeploymentStatus.CANCELLED });
+      mockPrisma.deployment.update.mockResolvedValue({
+        ...deployment,
+        status: DeploymentStatus.CANCELLED,
+      });
 
       const result = await service.cancel('dep-1');
 
@@ -121,7 +130,10 @@ describe('DeploymentsService', () => {
     it('cancels a BUILDING deployment', async () => {
       const deployment = { id: 'dep-1', status: DeploymentStatus.BUILDING };
       mockPrisma.deployment.findUnique.mockResolvedValue(deployment);
-      mockPrisma.deployment.update.mockResolvedValue({ ...deployment, status: DeploymentStatus.CANCELLED });
+      mockPrisma.deployment.update.mockResolvedValue({
+        ...deployment,
+        status: DeploymentStatus.CANCELLED,
+      });
 
       const result = await service.cancel('dep-1');
       expect(result.status).toBe(DeploymentStatus.CANCELLED);

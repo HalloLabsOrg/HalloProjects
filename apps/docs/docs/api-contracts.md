@@ -23,6 +23,7 @@ Authorization: Bearer <jwt_token>
 ## Standard Response
 
 **Success:**
+
 ```json
 {
   "data": { ... }
@@ -30,6 +31,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Success with pagination:**
+
 ```json
 {
   "data": [ ... ],
@@ -43,6 +45,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Error:**
+
 ```json
 {
   "statusCode": 400,
@@ -61,27 +64,27 @@ Authorization: Bearer <jwt_token>
 
 Semua list endpoint mendukung query params:
 
-| Param | Default | Max | Keterangan |
-|---|---|---|---|
-| `page` | 1 | — | Halaman |
-| `limit` | 20 | 100 | Items per halaman |
-| `search` | — | — | Full-text search |
-| `sortBy` | `createdAt` | — | Field untuk sort |
-| `sortOrder` | `desc` | — | `asc` atau `desc` |
+| Param       | Default     | Max | Keterangan        |
+| ----------- | ----------- | --- | ----------------- |
+| `page`      | 1           | —   | Halaman           |
+| `limit`     | 20          | 100 | Items per halaman |
+| `search`    | —           | —   | Full-text search  |
+| `sortBy`    | `createdAt` | —   | Field untuk sort  |
+| `sortOrder` | `desc`      | —   | `asc` atau `desc` |
 
 ## HTTP Status Codes
 
-| Code | Keterangan |
-|---|---|
-| `200` | OK |
-| `201` | Created |
-| `202` | Accepted (async job queued) |
-| `400` | Bad Request / Validation Error |
+| Code  | Keterangan                           |
+| ----- | ------------------------------------ |
+| `200` | OK                                   |
+| `201` | Created                              |
+| `202` | Accepted (async job queued)          |
+| `400` | Bad Request / Validation Error       |
 | `401` | Unauthorized (token invalid/missing) |
-| `403` | Forbidden (role tidak cukup) |
-| `404` | Not Found |
-| `409` | Conflict (duplicate slug, etc.) |
-| `500` | Internal Server Error |
+| `403` | Forbidden (role tidak cukup)         |
+| `404` | Not Found                            |
+| `409` | Conflict (duplicate slug, etc.)      |
+| `500` | Internal Server Error                |
 
 ## Swagger / OpenAPI
 

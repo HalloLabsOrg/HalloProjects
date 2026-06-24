@@ -1,10 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProviderFactory } from '../providers/provider.factory';
-import { ParsePaginationPipe } from '../../common/pipes/parse-pagination.pipe';
 import { paginateResponse, paginateArgs } from '../../common/helpers/paginate.helper';
-
-type PaginationQuery = InstanceType<typeof ParsePaginationPipe> extends Promise<infer T> ? T : never;
 
 @Injectable()
 export class RepositoriesService {
@@ -70,7 +67,9 @@ export class RepositoriesService {
         for (const repo of repos) {
           try {
             await this.prisma.repository.upsert({
-              where: { providerId_externalId: { providerId: connection.id, externalId: repo.externalId } },
+              where: {
+                providerId_externalId: { providerId: connection.id, externalId: repo.externalId },
+              },
               update: {
                 name: repo.name,
                 fullName: repo.fullName,
@@ -92,7 +91,9 @@ export class RepositoriesService {
             });
             synced++;
           } catch (err: unknown) {
-            errors.push(`${repo.fullName}: ${err instanceof Error ? err.message : 'unknown error'}`);
+            errors.push(
+              `${repo.fullName}: ${err instanceof Error ? err.message : 'unknown error'}`,
+            );
           }
         }
       } catch (err: unknown) {

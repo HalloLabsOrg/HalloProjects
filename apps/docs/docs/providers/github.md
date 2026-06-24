@@ -22,11 +22,11 @@ Integrasi dengan GitHub menggunakan Personal Access Token (PAT).
 
 Buka **Providers → Add Provider → GitHub**, isi:
 
-| Field | Value |
-|---|---|
-| Name | Nama deskriptif, e.g. "GitHub - HALLO Labs" |
-| Personal Access Token | Token dari langkah 1 |
-| Organization | (Opsional) nama org untuk filter repositories |
+| Field                 | Value                                         |
+| --------------------- | --------------------------------------------- |
+| Name                  | Nama deskriptif, e.g. "GitHub - HALLO Labs"   |
+| Personal Access Token | Token dari langkah 1                          |
+| Organization          | (Opsional) nama org untuk filter repositories |
 
 Klik **Test Connection** untuk verifikasi, lalu **Save**.
 

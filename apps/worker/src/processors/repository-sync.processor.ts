@@ -50,7 +50,9 @@ export class RepositorySyncProcessor {
         },
       });
 
-      this.logger.log(`Repository ${repositoryId} synced, latest commit: ${commit.sha.slice(0, 7)}`);
+      this.logger.log(
+        `Repository ${repositoryId} synced, latest commit: ${commit.sha.slice(0, 7)}`,
+      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Failed to sync repository ${repositoryId}: ${message}`);

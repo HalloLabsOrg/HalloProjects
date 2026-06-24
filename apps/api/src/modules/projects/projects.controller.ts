@@ -48,7 +48,12 @@ export class ProjectsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a project' })
-  async update(@Param('id') id: string, @Body() dto: UpdateProjectDto, @CurrentUser() user: User, @Req() req: Request) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const project = await this.projectsService.update(id, dto);
     await this.auditLogsService.log({
       action: AuditAction.PROJECT_UPDATED,

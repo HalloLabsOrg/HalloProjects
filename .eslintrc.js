@@ -2,11 +2,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'prettier'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   rules: {
     'prettier/prettier': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -18,12 +14,5 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  ignorePatterns: [
-    'node_modules/',
-    'dist/',
-    '.next/',
-    'coverage/',
-    '*.js',
-    '!.eslintrc.js',
-  ],
+  ignorePatterns: ['node_modules/', 'dist/', '.next/', 'coverage/', '*.js', '!.eslintrc.js'],
 };

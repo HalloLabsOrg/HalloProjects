@@ -25,7 +25,11 @@ export class ProviderFactory {
     }
 
     const config = this.decryptConfig(connection.config as Record<string, string>);
-    return new GithubProvider({ token: config.token, owner: config.owner, webhookSecret: config.webhookSecret });
+    return new GithubProvider({
+      token: config.token,
+      owner: config.owner,
+      webhookSecret: config.webhookSecret,
+    });
   }
 
   async getDeploymentProvider(providerId: string): Promise<DeploymentProvider> {

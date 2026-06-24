@@ -34,7 +34,10 @@ export class EnvironmentsService {
 
   async create(projectId: string, dto: CreateEnvironmentDto) {
     await this.ensureProjectExists(projectId);
-    const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = dto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     return this.prisma.environment.create({
       data: { projectId, name: dto.name, slug, branch: dto.branch, domain: dto.domain },
     });

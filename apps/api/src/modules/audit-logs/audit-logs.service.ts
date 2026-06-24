@@ -31,12 +31,15 @@ export class AuditLogsService {
     });
   }
 
-  async findAll(pagination: { page: number; limit: number }, filters?: {
-    userId?: string;
-    action?: AuditAction;
-    from?: string;
-    to?: string;
-  }) {
+  async findAll(
+    pagination: { page: number; limit: number },
+    filters?: {
+      userId?: string;
+      action?: AuditAction;
+      from?: string;
+      to?: string;
+    },
+  ) {
     const where: Record<string, unknown> = {};
 
     if (filters?.userId) where.userId = filters.userId;

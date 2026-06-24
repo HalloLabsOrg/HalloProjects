@@ -43,10 +43,10 @@ pnpm dev
 
 Setelah setup:
 
-| Service | URL |
-|---|---|
-| Web | http://localhost:3000 |
-| API | http://localhost:4000 |
+| Service | URL                        |
+| ------- | -------------------------- |
+| Web     | http://localhost:3000      |
+| API     | http://localhost:4000      |
 | Swagger | http://localhost:4000/docs |
 
 ## Development Workflow

@@ -9,20 +9,20 @@ HTTP health check otomatis untuk semua services. Berjalan sebagai recurring job 
 
 ## Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/monitoring` | Overview status semua services |
-| `GET` | `/monitoring/:serviceId` | Status + uptime 24h satu service |
-| `GET` | `/monitoring/:serviceId/history` | Riwayat check (pagination) |
+| Method | Path                             | Description                      |
+| ------ | -------------------------------- | -------------------------------- |
+| `GET`  | `/monitoring`                    | Overview status semua services   |
+| `GET`  | `/monitoring/:serviceId`         | Status + uptime 24h satu service |
+| `GET`  | `/monitoring/:serviceId/history` | Riwayat check (pagination)       |
 
 ## Status
 
-| Status | Kondisi |
-|---|---|
-| `ONLINE` | Response time < 1000ms, status code 2xx/3xx |
-| `SLOW` | Response time ≥ 1000ms |
+| Status    | Kondisi                                           |
+| --------- | ------------------------------------------------- |
+| `ONLINE`  | Response time < 1000ms, status code 2xx/3xx       |
+| `SLOW`    | Response time ≥ 1000ms                            |
 | `OFFLINE` | Timeout, connection error, atau status code ≥ 500 |
-| `UNKNOWN` | Belum pernah di-check |
+| `UNKNOWN` | Belum pernah di-check                             |
 
 ## Check Logic
 

@@ -24,17 +24,18 @@ HALLO Projects menghilangkan friction tersebut.
 
 ## Core Philosophy
 
-| Prinsip | Penjelasan |
-|---|---|
-| **Repository First** | Repository adalah sumber kebenaran utama untuk semua entitas |
-| **Provider Agnostic** | Provider dapat diganti tanpa mengubah inti sistem |
-| **Self Hosted First** | Semua data berada di server milik pengguna |
-| **Community Maintainable** | Struktur kode harus mudah dipahami kontributor baru |
+| Prinsip                     | Penjelasan                                                    |
+| --------------------------- | ------------------------------------------------------------- |
+| **Repository First**        | Repository adalah sumber kebenaran utama untuk semua entitas  |
+| **Provider Agnostic**       | Provider dapat diganti tanpa mengubah inti sistem             |
+| **Self Hosted First**       | Semua data berada di server milik pengguna                    |
+| **Community Maintainable**  | Struktur kode harus mudah dipahami kontributor baru           |
 | **Configuration Over Code** | Konfigurasi dilakukan melalui UI dan template, bukan hardcode |
 
 ## Community Edition Scope
 
 **Included:**
+
 - Self-hosted installation via Docker Compose
 - User management (Admin, Developer, Viewer)
 - GitHub integration (PAT)
@@ -48,6 +49,7 @@ HALLO Projects menghilangkan friction tersebut.
 - Dynamic template engine
 
 **Not Included (Enterprise/Future):**
+
 - AI Agents
 - SaaS hosted version
 - GitLab, Gitea, Bitbucket

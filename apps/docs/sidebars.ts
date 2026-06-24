@@ -49,11 +49,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: '🔌 Providers',
       collapsed: false,
-      items: [
-        'providers/overview',
-        'providers/github',
-        'providers/coolify',
-      ],
+      items: ['providers/overview', 'providers/github', 'providers/coolify'],
     },
     {
       type: 'doc',

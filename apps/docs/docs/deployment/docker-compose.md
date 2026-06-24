@@ -13,8 +13,8 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -68,7 +68,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hallo"]
+      test: ['CMD-SHELL', 'pg_isready -U hallo']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -79,7 +79,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -115,7 +115,7 @@ services:
   postgres:
     image: postgres:15-alpine
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       - POSTGRES_DB=hallo_projects
       - POSTGRES_USER=hallo
@@ -124,5 +124,5 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 ```

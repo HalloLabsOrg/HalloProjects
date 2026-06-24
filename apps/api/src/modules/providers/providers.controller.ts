@@ -33,7 +33,11 @@ export class ProvidersController {
 
   @Post('github')
   @ApiOperation({ summary: 'Connect GitHub with Personal Access Token' })
-  async createGithub(@Body() dto: CreateGithubProviderDto, @CurrentUser() user: User, @Req() req: Request) {
+  async createGithub(
+    @Body() dto: CreateGithubProviderDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const connection = await this.providersService.createGithub(dto);
     await this.auditLogsService.log({
       action: AuditAction.PROVIDER_CONNECTED,
@@ -48,7 +52,11 @@ export class ProvidersController {
 
   @Post('coolify')
   @ApiOperation({ summary: 'Connect Coolify instance' })
-  async createCoolify(@Body() dto: CreateCoolifyProviderDto, @CurrentUser() user: User, @Req() req: Request) {
+  async createCoolify(
+    @Body() dto: CreateCoolifyProviderDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const connection = await this.providersService.createCoolify(dto);
     await this.auditLogsService.log({
       action: AuditAction.PROVIDER_CONNECTED,

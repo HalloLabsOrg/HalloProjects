@@ -6,10 +6,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { QUEUE_NAMES } from '@hallo/shared';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: QUEUE_NAMES.DEPLOYMENTS }),
-    AuditLogsModule,
-  ],
+  imports: [BullModule.registerQueue({ name: QUEUE_NAMES.DEPLOYMENTS }), AuditLogsModule],
   controllers: [DeploymentsController],
   providers: [DeploymentsService],
   exports: [DeploymentsService],

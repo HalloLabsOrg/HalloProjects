@@ -40,7 +40,11 @@ export class RepositoriesController {
   @Post('sync')
   @ApiOperation({ summary: 'Sync repositories from all active GitHub providers' })
   @ApiQuery({ name: 'providerId', required: false })
-  async sync(@Query('providerId') providerId: string | undefined, @CurrentUser() user: User, @Req() req: Request) {
+  async sync(
+    @Query('providerId') providerId: string | undefined,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const result = await this.repositoriesService.sync(providerId);
     const totalSynced = result.results.reduce((sum, r) => sum + r.synced, 0);
     await this.auditLogsService.log({

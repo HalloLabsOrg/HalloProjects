@@ -9,10 +9,10 @@ HALLO Projects menggunakan arsitektur provider yang pluggable. Provider diimplem
 
 ## Provider Types
 
-| Type | Community Edition | Future |
-|---|---|---|
-| **Repository** | GitHub | GitLab, Gitea, Bitbucket |
-| **Deployment** | Coolify | Docker direct, Kubernetes, Railway |
+| Type           | Community Edition | Future                             |
+| -------------- | ----------------- | ---------------------------------- |
+| **Repository** | GitHub            | GitLab, Gitea, Bitbucket           |
+| **Deployment** | Coolify           | Docker direct, Kubernetes, Railway |
 
 ## Repository Provider Interface
 

@@ -9,14 +9,14 @@ Lihat [Template Engine](/docs/template-engine) untuk dokumentasi lengkap sistem 
 
 ## Endpoints
 
-| Method | Path | Description | Role |
-|---|---|---|---|
-| `GET` | `/templates` | List templates yang aktif | ALL |
-| `POST` | `/templates` | Upload template (.zip) | ADMIN |
-| `GET` | `/templates/:id` | Get template detail + schema | ALL |
-| `POST` | `/templates/:id/apply` | Apply template ke project | ADMIN, DEVELOPER |
-| `PATCH` | `/templates/:id/toggle` | Enable/disable template | ADMIN |
-| `DELETE` | `/templates/:id` | Hapus template | ADMIN |
+| Method   | Path                    | Description                  | Role             |
+| -------- | ----------------------- | ---------------------------- | ---------------- |
+| `GET`    | `/templates`            | List templates yang aktif    | ALL              |
+| `POST`   | `/templates`            | Upload template (.zip)       | ADMIN            |
+| `GET`    | `/templates/:id`        | Get template detail + schema | ALL              |
+| `POST`   | `/templates/:id/apply`  | Apply template ke project    | ADMIN, DEVELOPER |
+| `PATCH`  | `/templates/:id/toggle` | Enable/disable template      | ADMIN            |
+| `DELETE` | `/templates/:id`        | Hapus template               | ADMIN            |
 
 ## Upload Template
 
@@ -28,6 +28,7 @@ file: <template.zip>
 ```
 
 File `.zip` harus berisi:
+
 - `template.json` — metadata
 - `schema.json` — form schema
 - `files/` — template files dengan variable placeholders

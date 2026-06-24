@@ -7,14 +7,14 @@ title: Installation
 
 ## Requirements
 
-| Spesifikasi | Minimum | Recommended |
-|---|---|---|
-| OS | Ubuntu 22.04+ / Debian 12+ | Ubuntu 24.04 |
-| CPU | 2 vCPU | 4 vCPU |
-| RAM | 2 GB | 8 GB |
-| Storage | 30 GB SSD | 80 GB SSD |
-| Docker | 24+ | latest |
-| Docker Compose | Plugin v2+ | latest |
+| Spesifikasi    | Minimum                    | Recommended  |
+| -------------- | -------------------------- | ------------ |
+| OS             | Ubuntu 22.04+ / Debian 12+ | Ubuntu 24.04 |
+| CPU            | 2 vCPU                     | 4 vCPU       |
+| RAM            | 2 GB                       | 8 GB         |
+| Storage        | 30 GB SSD                  | 80 GB SSD    |
+| Docker         | 24+                        | latest       |
+| Docker Compose | Plugin v2+                 | latest       |
 
 ## Install via Docker Compose
 
@@ -67,7 +67,9 @@ docker compose exec api npx prisma migrate deploy
 
 :::tip Installer Script
 One-line installer akan tersedia di v1.0:
+
 ```bash
 curl -fsSL https://get.halloprojects.io | bash
 ```
+
 :::

@@ -25,11 +25,11 @@ Integrasi dengan [Coolify](https://coolify.io) untuk deployment management.
 
 Buka **Providers → Add Provider → Coolify**, isi:
 
-| Field | Value |
-|---|---|
-| Name | Nama deskriptif, e.g. "Coolify - Production" |
-| API URL | URL Coolify kamu, e.g. `https://coolify.example.com` |
-| API Token | Token dari langkah 1 |
+| Field     | Value                                                |
+| --------- | ---------------------------------------------------- |
+| Name      | Nama deskriptif, e.g. "Coolify - Production"         |
+| API URL   | URL Coolify kamu, e.g. `https://coolify.example.com` |
+| API Token | Token dari langkah 1                                 |
 
 Klik **Test Connection** untuk verifikasi, lalu **Save**.
 

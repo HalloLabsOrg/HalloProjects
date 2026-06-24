@@ -9,8 +9,8 @@ Menerima dan memproses webhook dari GitHub untuk trigger auto-deploy.
 
 ## Endpoints
 
-| Method | Path | Description | Auth |
-|---|---|---|---|
+| Method | Path               | Description            | Auth      |
+| ------ | ------------------ | ---------------------- | --------- |
 | `POST` | `/webhooks/github` | Receive GitHub webhook | Signature |
 
 ## Signature Validation
@@ -29,10 +29,10 @@ Header yang dicheck: `X-Hub-Signature-256`
 
 ## Supported Events
 
-| Event | Aksi |
-|---|---|
-| `push` | Update repository info + trigger auto-deploy jika branch match |
-| `pull_request` | Update repository info (no deploy) |
+| Event          | Aksi                                                           |
+| -------------- | -------------------------------------------------------------- |
+| `push`         | Update repository info + trigger auto-deploy jika branch match |
+| `pull_request` | Update repository info (no deploy)                             |
 
 ## Processing Flow
 

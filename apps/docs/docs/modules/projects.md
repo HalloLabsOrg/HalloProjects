@@ -9,14 +9,14 @@ Project adalah entitas utama di HALLO Projects. Satu project berisi beberapa ser
 
 ## Endpoints
 
-| Method | Path | Description | Role |
-|---|---|---|---|
-| `GET` | `/projects` | List semua projects | ALL |
-| `POST` | `/projects` | Create project baru | ADMIN, DEVELOPER |
-| `GET` | `/projects/:id` | Get project detail | ALL |
-| `PATCH` | `/projects/:id` | Update project | ADMIN, DEVELOPER |
-| `POST` | `/projects/:id/archive` | Archive project | ADMIN |
-| `DELETE` | `/projects/:id` | Delete project | ADMIN |
+| Method   | Path                    | Description         | Role             |
+| -------- | ----------------------- | ------------------- | ---------------- |
+| `GET`    | `/projects`             | List semua projects | ALL              |
+| `POST`   | `/projects`             | Create project baru | ADMIN, DEVELOPER |
+| `GET`    | `/projects/:id`         | Get project detail  | ALL              |
+| `PATCH`  | `/projects/:id`         | Update project      | ADMIN, DEVELOPER |
+| `POST`   | `/projects/:id/archive` | Archive project     | ADMIN            |
+| `DELETE` | `/projects/:id`         | Delete project      | ADMIN            |
 
 ## DTOs
 

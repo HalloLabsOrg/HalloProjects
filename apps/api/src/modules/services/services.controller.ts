@@ -30,7 +30,12 @@ export class ServicesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a service in a project' })
-  async create(@Param('projectId') projectId: string, @Body() dto: CreateServiceDto, @CurrentUser() user: User, @Req() req: Request) {
+  async create(
+    @Param('projectId') projectId: string,
+    @Body() dto: CreateServiceDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const service = await this.servicesService.create(projectId, dto);
     await this.auditLogsService.log({
       action: AuditAction.SERVICE_CREATED,
@@ -44,7 +49,13 @@ export class ServicesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a service' })
-  async update(@Param('projectId') projectId: string, @Param('id') id: string, @Body() dto: UpdateServiceDto, @CurrentUser() user: User, @Req() req: Request) {
+  async update(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateServiceDto,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     const service = await this.servicesService.update(projectId, id, dto);
     await this.auditLogsService.log({
       action: AuditAction.SERVICE_UPDATED,
@@ -58,7 +69,12 @@ export class ServicesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a service' })
-  async remove(@Param('projectId') projectId: string, @Param('id') id: string, @CurrentUser() user: User, @Req() req: Request) {
+  async remove(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
     await this.servicesService.remove(projectId, id);
     await this.auditLogsService.log({
       action: AuditAction.SERVICE_DELETED,

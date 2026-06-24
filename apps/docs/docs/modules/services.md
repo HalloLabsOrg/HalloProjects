@@ -9,13 +9,13 @@ Service adalah unit deploy dalam sebuah project. Satu project bisa memiliki bebe
 
 ## Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/projects/:projectId/services` | List services |
-| `POST` | `/projects/:projectId/services` | Create service |
-| `GET` | `/projects/:projectId/services/:id` | Get service detail |
-| `PATCH` | `/projects/:projectId/services/:id` | Update service |
-| `DELETE` | `/projects/:projectId/services/:id` | Delete service |
+| Method   | Path                                | Description        |
+| -------- | ----------------------------------- | ------------------ |
+| `GET`    | `/projects/:projectId/services`     | List services      |
+| `POST`   | `/projects/:projectId/services`     | Create service     |
+| `GET`    | `/projects/:projectId/services/:id` | Get service detail |
+| `PATCH`  | `/projects/:projectId/services/:id` | Update service     |
+| `DELETE` | `/projects/:projectId/services/:id` | Delete service     |
 
 ## DTOs
 

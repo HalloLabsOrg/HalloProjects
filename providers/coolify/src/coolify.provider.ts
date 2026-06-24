@@ -54,7 +54,9 @@ export class CoolifyProvider implements DeploymentProvider {
   }
 
   async getLogs(externalId: string): Promise<string> {
-    const { data } = await this.client.get<{ logs: string }>(`/api/v1/deployments/${externalId}/logs`);
+    const { data } = await this.client.get<{ logs: string }>(
+      `/api/v1/deployments/${externalId}/logs`,
+    );
     return data.logs ?? '';
   }
 

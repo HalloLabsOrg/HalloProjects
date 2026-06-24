@@ -81,12 +81,12 @@ Mendefinisikan form yang ditampilkan ke user saat apply template:
 
 ### Field Types
 
-| Type | Keterangan |
-|---|---|
-| `text` | Input teks |
-| `boolean` | Toggle on/off |
-| `select` | Dropdown pilihan |
-| `number` | Input angka |
+| Type       | Keterangan        |
+| ---------- | ----------------- |
+| `text`     | Input teks        |
+| `boolean`  | Toggle on/off     |
+| `select`   | Dropdown pilihan  |
+| `number`   | Input angka       |
 | `password` | Input tersembunyi |
 
 ## Variable Substitution
@@ -146,12 +146,12 @@ Return preview untuk konfirmasi
 
 ## Built-in Templates
 
-| Template | Keterangan |
-|---|---|
-| `nodejs-postgres` | Node.js + PostgreSQL backend |
-| `nextjs-static` | Next.js static frontend |
+| Template             | Keterangan                    |
+| -------------------- | ----------------------------- |
+| `nodejs-postgres`    | Node.js + PostgreSQL backend  |
+| `nextjs-static`      | Next.js static frontend       |
 | `fullstack-monorepo` | Next.js + NestJS + PostgreSQL |
-| `worker-service` | Background job service |
+| `worker-service`     | Background job service        |
 
 ## Membuat Template Sendiri
 

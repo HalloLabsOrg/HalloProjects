@@ -9,13 +9,13 @@ Mengelola koneksi ke provider eksternal (GitHub, Coolify).
 
 ## Endpoints
 
-| Method | Path | Description | Role |
-|---|---|---|---|
-| `GET` | `/providers` | List provider connections | ALL |
-| `POST` | `/providers` | Add provider connection | ADMIN |
-| `GET` | `/providers/:id` | Get provider detail | ALL |
-| `POST` | `/providers/:id/test` | Test koneksi | ADMIN |
-| `DELETE` | `/providers/:id` | Remove provider | ADMIN |
+| Method   | Path                  | Description               | Role  |
+| -------- | --------------------- | ------------------------- | ----- |
+| `GET`    | `/providers`          | List provider connections | ALL   |
+| `POST`   | `/providers`          | Add provider connection   | ADMIN |
+| `GET`    | `/providers/:id`      | Get provider detail       | ALL   |
+| `POST`   | `/providers/:id/test` | Test koneksi              | ADMIN |
+| `DELETE` | `/providers/:id`      | Remove provider           | ADMIN |
 
 ## Create GitHub Provider
 

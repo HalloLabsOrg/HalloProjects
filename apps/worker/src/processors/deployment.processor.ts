@@ -45,10 +45,7 @@ export class DeploymentProcessor {
     await this.updateStatus(deploymentId, DeploymentStatus.BUILDING);
 
     try {
-      const provider = this.getCoolifyProvider(deployment.provider);
-
-      const config = this.decryptConfig(deployment.provider.config as Record<string, string>);
-      const coolify = new CoolifyProvider({ apiUrl: config.apiUrl, apiToken: config.apiToken });
+      const coolify = this.getCoolifyProvider(deployment.provider);
 
       const { externalId } = await coolify.deploy({
         applicationUuid: deployment.service.repository?.externalId ?? deployment.serviceId,

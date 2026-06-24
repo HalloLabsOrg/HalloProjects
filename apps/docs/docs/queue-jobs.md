@@ -10,12 +10,12 @@ HALLO Projects menggunakan **BullMQ** dengan **Redis** untuk semua background pr
 
 ## Queues
 
-| Queue | Job | Trigger | Concurrency |
-|---|---|---|---|
-| `deployments` | `deploy-service` | Manual/auto deploy | 5 |
-| `repository-sync` | `sync-repository` | Manual sync / webhook | 10 |
-| `webhooks` | `process-github-webhook` | GitHub webhook | 20 |
-| `health-checks` | `check-service-health` | Repeatable (60s) | 20 |
+| Queue             | Job                      | Trigger               | Concurrency |
+| ----------------- | ------------------------ | --------------------- | ----------- |
+| `deployments`     | `deploy-service`         | Manual/auto deploy    | 5           |
+| `repository-sync` | `sync-repository`        | Manual sync / webhook | 10          |
+| `webhooks`        | `process-github-webhook` | GitHub webhook        | 20          |
+| `health-checks`   | `check-service-health`   | Repeatable (60s)      | 20          |
 
 ## Job Definitions
 
@@ -50,7 +50,7 @@ interface SyncRepositoryJobData {
 
 ```typescript
 interface GithubWebhookJobData {
-  event: string;               // "push" | "pull_request"
+  event: string; // "push" | "pull_request"
   repositoryFullName: string;
   branch: string;
   commitSha: string;

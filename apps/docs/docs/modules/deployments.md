@@ -9,14 +9,14 @@ Mengelola proses deployment dari trigger hingga status akhir.
 
 ## Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/deployments` | List semua deployments |
-| `GET` | `/services/:serviceId/deployments` | List deployments per service |
-| `POST` | `/services/:serviceId/deploy` | Trigger manual deploy |
-| `GET` | `/deployments/:id` | Get deployment detail + logs |
-| `POST` | `/deployments/:id/cancel` | Cancel deployment |
-| `GET` | `/deployments/:id/logs/stream` | Stream logs via SSE |
+| Method | Path                               | Description                  |
+| ------ | ---------------------------------- | ---------------------------- |
+| `GET`  | `/deployments`                     | List semua deployments       |
+| `GET`  | `/services/:serviceId/deployments` | List deployments per service |
+| `POST` | `/services/:serviceId/deploy`      | Trigger manual deploy        |
+| `GET`  | `/deployments/:id`                 | Get deployment detail + logs |
+| `POST` | `/deployments/:id/cancel`          | Cancel deployment            |
+| `GET`  | `/deployments/:id/logs/stream`     | Stream logs via SSE          |
 
 ## Status Lifecycle
 
@@ -26,14 +26,14 @@ PENDING → BUILDING → DEPLOYING → SUCCESS
          └→ CANCELLED
 ```
 
-| Status | Keterangan |
-|---|---|
-| `PENDING` | Deployment dibuat, menunggu worker |
-| `BUILDING` | Coolify sedang build image |
+| Status      | Keterangan                                      |
+| ----------- | ----------------------------------------------- |
+| `PENDING`   | Deployment dibuat, menunggu worker              |
+| `BUILDING`  | Coolify sedang build image                      |
 | `DEPLOYING` | Image selesai di-build, sedang deploy ke server |
-| `SUCCESS` | Deployment berhasil |
-| `FAILED` | Deployment gagal |
-| `CANCELLED` | Di-cancel oleh user |
+| `SUCCESS`   | Deployment berhasil                             |
+| `FAILED`    | Deployment gagal                                |
+| `CANCELLED` | Di-cancel oleh user                             |
 
 ## Trigger Deploy
 
@@ -91,10 +91,9 @@ async handleDeploy(job: Job<DeployJobData>) {
 Frontend bisa subscribe ke log stream via SSE:
 
 ```javascript
-const eventSource = new EventSource(
-  `/api/deployments/${deploymentId}/logs/stream`,
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+const eventSource = new EventSource(`/api/deployments/${deploymentId}/logs/stream`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
 
 eventSource.onmessage = (event) => {
   const line = JSON.parse(event.data);

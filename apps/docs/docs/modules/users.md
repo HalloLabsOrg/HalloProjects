@@ -9,22 +9,22 @@ Manajemen pengguna sistem. Semua endpoint hanya bisa diakses oleh **ADMIN**.
 
 ## Endpoints
 
-| Method | Path | Description | Role |
-|---|---|---|---|
-| `GET` | `/users` | List semua users | ADMIN |
-| `POST` | `/users` | Create user baru | ADMIN |
-| `GET` | `/users/:id` | Get user detail | ADMIN |
-| `PATCH` | `/users/:id` | Update user (name, role) | ADMIN |
-| `PATCH` | `/users/:id/disable` | Disable user | ADMIN |
-| `DELETE` | `/users/:id` | Delete user | ADMIN |
+| Method   | Path                 | Description              | Role  |
+| -------- | -------------------- | ------------------------ | ----- |
+| `GET`    | `/users`             | List semua users         | ADMIN |
+| `POST`   | `/users`             | Create user baru         | ADMIN |
+| `GET`    | `/users/:id`         | Get user detail          | ADMIN |
+| `PATCH`  | `/users/:id`         | Update user (name, role) | ADMIN |
+| `PATCH`  | `/users/:id/disable` | Disable user             | ADMIN |
+| `DELETE` | `/users/:id`         | Delete user              | ADMIN |
 
 ## Roles
 
-| Role | Keterangan |
-|---|---|
-| `ADMIN` | Full access ke semua fitur |
+| Role        | Keterangan                                      |
+| ----------- | ----------------------------------------------- |
+| `ADMIN`     | Full access ke semua fitur                      |
 | `DEVELOPER` | Bisa create project, trigger deploy, manage env |
-| `VIEWER` | Read-only access |
+| `VIEWER`    | Read-only access                                |
 
 ## DTOs
 
