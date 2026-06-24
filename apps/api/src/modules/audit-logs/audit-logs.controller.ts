@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuditLogsService } from './audit-logs.service';
-import { ParsePaginationPipe } from '../../common/pipes/parse-pagination.pipe';
+import { ParsePaginationPipe, PaginationQuery } from '../../common/pipes/parse-pagination.pipe';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role, AuditAction } from '@prisma/client';
 
@@ -21,7 +21,7 @@ export class AuditLogsController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   findAll(
-    @Query(ParsePaginationPipe) pagination: any,
+    @Query(ParsePaginationPipe) pagination: PaginationQuery,
     @Query('userId') userId?: string,
     @Query('action') action?: AuditAction,
     @Query('from') from?: string,

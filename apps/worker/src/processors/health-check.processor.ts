@@ -45,7 +45,7 @@ export class HealthCheckProcessor {
 
       await Promise.all(checkPromises);
       this.logger.log(`Completed ${checkPromises.length} service health checks.`);
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error('Failed executing service health checks:', error);
     }
   }
@@ -93,14 +93,16 @@ export class HealthCheckProcessor {
           responseTime,
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       const responseTime = Date.now() - startTime;
-      this.logger.warn(`Health check failed for service ${serviceId} at ${url}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorName = error instanceof Error ? error.name : '';
+      this.logger.warn(`Health check failed for service ${serviceId} at ${url}: ${errorMessage}`);
 
       const isTimeout =
-        error.name === 'TimeoutError' ||
-        error.message?.includes('timeout') ||
-        error.message?.includes('aborted');
+        errorName === 'TimeoutError' ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('aborted');
 
       await this.prisma.monitoringResult.create({
         data: {

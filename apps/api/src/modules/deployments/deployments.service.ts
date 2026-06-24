@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, MessageEvent } from
 import { PrismaService } from '../../prisma/prisma.service';
 import { TriggerDeployDto } from './dto/deployment.dto';
 import { paginateResponse, paginateArgs } from '../../common/helpers/paginate.helper';
-import { DeploymentStatus } from '@prisma/client';
+import { DeploymentStatus, Prisma } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { QUEUE_NAMES, JOB_NAMES } from '@hallo/shared';
@@ -34,7 +34,7 @@ export class DeploymentsService {
       projectId?: string;
     },
   ) {
-    const where: any = {};
+    const where: Prisma.DeploymentWhereInput = {};
 
     if (filters?.status) where.status = filters.status;
     if (filters?.serviceId) where.serviceId = filters.serviceId;
@@ -157,8 +157,9 @@ export class DeploymentsService {
         if (provider.cancel) {
           await provider.cancel(deployment.externalId);
         }
-      } catch (err: any) {
-        console.error(`Failed to cancel deployment on provider: ${err.message}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Failed to cancel deployment on provider: ${message}`);
       }
     }
 

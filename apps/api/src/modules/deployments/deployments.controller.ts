@@ -2,7 +2,7 @@ import { Controller, Get, Post, Param, Body, Query, Req, Sse, MessageEvent } fro
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DeploymentsService } from './deployments.service';
 import { TriggerDeployDto } from './dto/deployment.dto';
-import { ParsePaginationPipe } from '../../common/pipes/parse-pagination.pipe';
+import { ParsePaginationPipe, PaginationQuery } from '../../common/pipes/parse-pagination.pipe';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { User, DeploymentStatus, AuditAction } from '@prisma/client';
@@ -29,7 +29,7 @@ export class DeploymentsController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   findAll(
-    @Query(ParsePaginationPipe) pagination: any,
+    @Query(ParsePaginationPipe) pagination: PaginationQuery,
     @Query('status') status?: DeploymentStatus,
     @Query('serviceId') serviceId?: string,
     @Query('environmentId') environmentId?: string,
@@ -51,7 +51,7 @@ export class DeploymentsController {
   @ApiOperation({ summary: 'List deployments for a service' })
   findByService(
     @Param('serviceId') serviceId: string,
-    @Query(ParsePaginationPipe) pagination: any,
+    @Query(ParsePaginationPipe) pagination: PaginationQuery,
   ) {
     return this.deploymentsService.findByService(serviceId, pagination);
   }
