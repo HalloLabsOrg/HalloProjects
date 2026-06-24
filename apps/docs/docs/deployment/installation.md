@@ -16,60 +16,73 @@ title: Installation
 | Docker         | 24+                        | latest       |
 | Docker Compose | Plugin v2+                 | latest       |
 
-## Install via Docker Compose
+## Automated Installation (Recommended)
+
+Kami menyediakan script installer otomatis untuk memasang HALLO Projects di server Ubuntu / Debian secara cepat:
+
+```bash
+# 1. Unduh installer
+curl -fsSL -o install.sh https://raw.githubusercontent.com/hallolabs/hallo-projects/main/install.sh
+
+# 2. Jalankan installer (gunakan sudo jika diperlukan)
+chmod +x install.sh
+./install.sh
+```
+
+Script ini akan otomatis:
+* Memeriksa dependensi sistem (`docker`, `git`, `curl`).
+* Meminta input `DOMAIN` dan kredensial Admin.
+* Membuat file `.env` dengan key enkripsi dan password database yang aman.
+* Menjalankan stack kontainer Docker.
+* Melakukan migrasi database dan seeding template awal.
+
+---
+
+## Manual Installation (Fallback)
+
+Jika Anda ingin mengonfigurasi dan menjalankan container secara manual:
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/hallolabs/hallo-projects.git
 cd hallo-projects
 
-# 2. Copy environment file
+# 2. Salin environment file
 cp .env.example .env
 
-# 3. Edit konfigurasi (domain, secrets, database password)
+# 3. Edit konfigurasi (domain, JWT secret, database password)
 nano .env
 
-# 4. Jalankan semua services
-docker compose up -d
+# 4. Jalankan services
+docker compose -f docker/docker-compose.yml up -d
 
-# 5. Jalankan database migrations
-docker compose exec api npx prisma migrate deploy
-
-# 6. Buat admin user pertama
-docker compose exec api npm run seed:admin
+# 5. Jalankan database migrations & seed templates
+docker compose -f docker/docker-compose.yml exec -T api pnpm --filter @hallo/api exec prisma migrate deploy
+docker compose -f docker/docker-compose.yml exec -T api pnpm --filter @hallo/api run seed
 ```
 
-Setelah selesai, buka `https://your-domain` di browser.
+---
 
 ## Verifikasi Instalasi
 
-```bash
-# Cek semua services berjalan
-docker compose ps
+Untuk memastikan semua container berjalan dengan baik:
 
-# Cek logs jika ada masalah
-docker compose logs api
-docker compose logs worker
+```bash
+# Cek semua container yang aktif
+docker compose -f docker/docker-compose.yml ps
+
+# Cek log runtime salah satu service
+docker compose -f docker/docker-compose.yml logs api
 ```
+
+---
 
 ## Update ke Versi Terbaru
 
-```bash
-# Pull images terbaru
-docker compose pull
-
-# Restart services
-docker compose up -d
-
-# Jalankan migration baru jika ada
-docker compose exec api npx prisma migrate deploy
-```
-
-:::tip Installer Script
-One-line installer akan tersedia di v1.0:
+Untuk memperbarui sistem ke versi rilis terbaru, Anda dapat menjalankan script update otomatis yang telah kami sediakan:
 
 ```bash
-curl -fsSL https://get.halloprojects.io | bash
+# Jalankan script update otomatis
+./update.sh
 ```
 
-:::

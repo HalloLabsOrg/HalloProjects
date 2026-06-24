@@ -12,6 +12,12 @@
   <strong>Platform-as-a-Service (PaaS) mandiri untuk mengelola, mendeploy, dan mengorkestrasi web service secara otomatis di server Anda sendiri.</strong>
 </p>
 
+<p align="center">
+  <a href="https://github.com/hallolabs/hallo-projects/actions/workflows/ci.yml"><img src="https://github.com/hallolabs/hallo-projects/workflows/CI/badge.svg" alt="CI Status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
+  <a href="https://github.com/hallolabs/hallo-projects/releases"><img src="https://img.shields.io/github/v/release/hallolabs/hallo-projects" alt="Release" /></a>
+</p>
+
 ---
 
 ## 🌟 Apa itu HALLO Projects?
@@ -50,58 +56,45 @@ HALLO Projects memecahkan masalah manajemen server tradisional melalui beberapa 
 
 ## 🚀 Panduan Instalasi (VPS Production)
 
-HALLO Projects dirancang agar mudah dijalankan menggunakan Docker Compose. Ikuti langkah-langkah berikut untuk memasangnya di server VPS Anda.
+Kami menyediakan skrip installer satu baris untuk memasang HALLO Projects di server berbasis Linux (Ubuntu 22.04+ / Debian 12+) secara otomatis.
 
-### Prasyarat
+### Cara Cepat (Automated Installation)
 
-- Server dengan OS Linux (direkomendasikan Ubuntu 22.04 LTS atau lebih baru)
-- Docker dan Docker Compose terpasang
-- Domain/Sub-domain yang sudah diarahkan (DNS A Record) ke alamat IP server VPS Anda
+Jalankan perintah berikut di server VPS Anda:
 
-### Langkah-Langkah Pemasangan
+```bash
+curl -fsSL https://raw.githubusercontent.com/hallolabs/hallo-projects/main/install.sh | bash
+```
 
-1. **Clone Repositori**:
+Skrip ini akan secara otomatis:
+1. Memverifikasi persyaratan sistem (`Docker`, `Git`, `Curl`).
+2. Menanyakan domain Anda dan konfigurasi awal admin.
+3. Membuat environment `.env` dengan password database & JWT secrets acak yang aman.
+4. Menarik file, mem-build, dan menyalakan seluruh service container Docker.
+5. Menjalankan migrasi database serta mengunggah template bawaan.
 
-   ```bash
-   git clone https://github.com/hallolabs/hallo-projects.git
-   cd hallo-projects
-   ```
+### Memperbarui Platform (Update)
 
-2. **Siapkan Konfigurasi Environment**:
-   Salin file konfigurasi docker environment:
+Untuk melakukan update ke versi terbaru, masuk ke folder instalasi dan jalankan script update:
 
-   ```bash
-   cp .env.docker .env
-   ```
-
-   Buka file `.env` yang baru dibuat dan sesuaikan konfigurasi domain Anda:
-
-   ```env
-   DOMAIN=domain-anda.com
-   JWT_SECRET=gunakan-string-acak-yang-aman
-   ENCRYPTION_KEY=32-karakter-string-kunci-enkripsi
-   ```
-
-3. **Jalankan Aplikasi dengan Docker Compose**:
-   Mulai service dalam mode daemon:
-
-   ```bash
-   docker compose -f docker/docker-compose.yml up -d
-   ```
-
-4. **Akses Dashboard**:
-   Setelah container berjalan, Caddy akan mengurus sertifikat SSL (HTTPS) secara otomatis. Anda dapat mengakses platform pada alamat sub-domain berikut:
-   - **Dashboard UI:** `https://app.domain-anda.com`
-   - **API Server:** `https://api.domain-anda.com`
-   - **Dokumentasi Panduan:** `https://docs.domain-anda.com`
+```bash
+./update.sh
+```
 
 ---
 
 ## 🛠️ Langkah Awal Penggunaan
 
-1. **Buat Akun Administrator**: Buka halaman dashboard pada kunjungan pertama untuk mendaftarkan akun administrator utama.
-2. **Hubungkan GitHub Provider**: Masuk ke menu **Providers**, tambahkan koneksi GitHub baru dengan memasukkan Personal Access Token (PAT) klasik Anda.
-3. **Buat Project Baru**: Masuk ke menu **Projects**, buat workspace project baru dan hubungkan repositori Git Anda untuk memulai deployment pertama.
+1. **Akses Dashboard**: Setelah instalasi selesai, buka browser Anda menuju domain yang Anda masukkan (misal: `http://domain-anda.com`).
+2. **Kredensial Default**: Masuk menggunakan email admin dan password yang Anda konfigurasi di awal pemasangan.
+3. **Hubungkan GitHub Provider**: Masuk ke menu **Providers**, tambahkan koneksi GitHub baru dengan memasukkan Personal Access Token (PAT) klasik Anda.
+4. **Buat Project Baru**: Masuk ke menu **Projects**, buat workspace project baru dan hubungkan repositori Git Anda untuk memulai deployment pertama.
+
+---
+
+## 📖 Dokumentasi Lengkap
+Dokumentasi lengkap, panduan konfigurasi variabel, modul reference, skema pembuatan template kustom, dan panduan kontributor dapat diakses melalui server dokumentasi terintegrasi:
+* Server Docs: `http://docs.domain-anda.com` (atau `http://localhost:3001` di lingkungan pengembangan lokal).
 
 ---
 

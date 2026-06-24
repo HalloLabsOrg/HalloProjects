@@ -62,9 +62,10 @@ const sidebars: SidebarsConfig = {
       label: '🔄 Queue & Jobs',
     },
     {
-      type: 'doc',
-      id: 'template-engine',
+      type: 'category',
       label: '🧩 Template Engine',
+      collapsed: false,
+      items: ['template-engine', 'templates/creating-templates'],
     },
     {
       type: 'doc',
@@ -80,6 +81,11 @@ const sidebars: SidebarsConfig = {
         'deployment/docker-compose',
         'deployment/environment-variables',
       ],
+    },
+    {
+      type: 'doc',
+      id: 'provider-sdk',
+      label: '🛠️ Provider SDK Guide',
     },
     {
       type: 'doc',

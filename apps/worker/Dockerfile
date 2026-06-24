@@ -44,6 +44,11 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
 
+# Copy prisma schema and package configuration to generate prisma client
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/prisma ./apps/api/prisma
+RUN pnpm --filter @hallo/api exec prisma generate
+
 WORKDIR /app/apps/worker
 
 ENV NODE_ENV=production

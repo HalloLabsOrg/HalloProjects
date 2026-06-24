@@ -38,8 +38,8 @@ COPY providers/coolify/package.json ./providers/coolify/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client ./node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+COPY apps/api/prisma ./apps/api/prisma
+RUN pnpm --filter @hallo/api exec prisma generate
 
 WORKDIR /app/apps/api
 
