@@ -2128,10 +2128,23 @@ chore: upgrade prisma to 5.8
 **Goal:** Dukungan otentikasi fleksibel untuk penyedia repositori (GitHub) dengan mendukung opsi login tombol (OAuth) maupun token statis (PAT), serta peningkatan arsitektur kemitraan lainnya.
 
 #### 🔐 Integrasi & Keamanan
-- [ ] Implementasi backend OAuth Flow endpoint untuk integrasi GitHub App / OAuth App
-- [ ] Dukungan penyimpanan token otentikasi dinamis (Client ID, Secret, Redirect URI) di `.env`
-- [ ] Desain antarmuka pilihan koneksi di frontend: Tombol OAuth (Rekomendasi) & Form PAT (Lanjutan)
-- [ ] Penyelarasan siklus token (refresh token & expiry handling) pada database
+- [x] Implementasi backend OAuth Flow endpoint untuk integrasi GitHub App / OAuth App
+- [x] Dukungan penyimpanan token otentikasi dinamis (Client ID, Secret, Redirect URI) di `.env`
+- [x] Desain antarmuka pilihan koneksi di frontend: Tombol OAuth (Rekomendasi) & Form PAT (Lanjutan)
+- [x] Penyelarasan siklus token (refresh token & expiry handling) pada database
+
+---
+
+### v1.2 — Multi-Account GitHub App (No-env Setup)
+
+**Goal:** Mendukung pendaftaran GitHub App secara dinamis langsung dari dashboard melalui **GitHub App Manifest Flow** (sehingga tidak memerlukan konfigurasi manual pada file `.env` server) dan mendukung integrasi **multi-akun/multi-organisasi GitHub** dalam satu instance.
+
+#### 📦 Arsitektur & Otorisasi
+- [ ] Implementasi backend Manifest payload generator & callback converter (`POST /conversions`) untuk mendaftarkan GitHub App secara dinamis
+- [ ] Penyimpanan kredensial App lengkap (App ID, Client ID, Client Secret, Private Key) langsung di database
+- [ ] Dukungan multi-akun & multi-organisasi melalui instalasi GitHub App publik
+- [ ] Generate Installation Access Token (IAT) menggunakan RSA JWT signing secara real-time untuk API calls
+- [ ] Desain UI dashboard untuk inisiasi Manifest Flow dan pengelolaan multi-instalasi akun aktif
 
 ---
 
@@ -2144,7 +2157,8 @@ chore: upgrade prisma to 5.8
 | v0.3 | Observability: Monitoring, Env vars, Domains | `[x] Completed` | ~25 tasks |
 | v0.4 | Template Engine: Upload, Apply, Built-in templates | `[x] Completed` | ~25 tasks |
 | v1.0 | Community Release: Docker, Docs, Installer, Tests | `[x] Completed` | ~30 tasks |
-| v1.1 | Security & Integrations: GitHub OAuth, OAuth providers | `[ ] Not Started` | ~15 tasks |
+| v1.1 | Security & Integrations: GitHub OAuth, OAuth providers | `[x] Completed` | ~15 tasks |
+| v1.2 | Multi-Account App: GitHub App Manifest flow (No-env) | `[ ] Not Started` | ~15 tasks |
 
 ---
 
