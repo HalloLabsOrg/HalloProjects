@@ -16,11 +16,15 @@ services:
     depends_on:
       - web
       - api
+      - docs
     networks:
       - hallo_net
 
   web:
     image: hallolabs/hallo-projects-web:latest
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
     container_name: HalloProjects-web
     restart: unless-stopped
     environment:
@@ -33,6 +37,9 @@ services:
 
   api:
     image: hallolabs/hallo-projects-api:latest
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
     container_name: HalloProjects-api
     restart: unless-stopped
     environment:
@@ -60,6 +67,9 @@ services:
 
   worker:
     image: hallolabs/hallo-projects-worker:latest
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
     container_name: HalloProjects-worker
     restart: unless-stopped
     environment:
@@ -74,6 +84,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - hallo_net
+
+  docs:
+    image: hallolabs/hallo-projects-docs:latest
+    build:
+      context: ..
+      dockerfile: apps/docs/Dockerfile
+    container_name: HalloProjects-docs
+    restart: unless-stopped
     networks:
       - hallo_net
 

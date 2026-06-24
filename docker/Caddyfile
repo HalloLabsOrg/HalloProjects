@@ -3,3 +3,8 @@
   reverse_proxy /webhooks/* api:4000
   reverse_proxy * web:3000
 }
+
+docs.{$DOMAIN} {
+  reverse_proxy * docs:80
+}
+
