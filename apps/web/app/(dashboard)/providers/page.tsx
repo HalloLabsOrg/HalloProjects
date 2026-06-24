@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,11 @@ export default function ProvidersPage() {
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<'app' | 'pat'>('app');
   const [form, setForm] = useState({ name: '', token: '', owner: '' });
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['providers'] });
+    queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
+  }, [queryClient]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['providers'],

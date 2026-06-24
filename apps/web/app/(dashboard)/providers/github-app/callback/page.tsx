@@ -29,6 +29,7 @@ function CallbackContent() {
       });
       // After App registration, let's trigger the install flow right away for convenience!
       router.push('/providers');
+      router.refresh();
     },
     onError: (err: any) => {
       const message = err?.response?.data?.message ?? 'Failed to exchange App creation code';
@@ -38,6 +39,7 @@ function CallbackContent() {
         variant: 'destructive',
       });
       router.push('/providers');
+      router.refresh();
     },
   });
 
@@ -50,6 +52,7 @@ function CallbackContent() {
         description: `Connected organization/user: ${data.owner}`,
       });
       router.push('/providers');
+      router.refresh();
     },
     onError: (err: any) => {
       const message = err?.response?.data?.message ?? 'Failed to complete GitHub App installation';
@@ -59,6 +62,7 @@ function CallbackContent() {
         variant: 'destructive',
       });
       router.push('/providers');
+      router.refresh();
     },
   });
 
@@ -70,6 +74,7 @@ function CallbackContent() {
         variant: 'destructive',
       });
       router.push('/providers');
+      router.refresh();
       return;
     }
 
