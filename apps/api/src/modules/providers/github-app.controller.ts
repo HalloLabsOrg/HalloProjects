@@ -59,9 +59,14 @@ export class GithubAppController {
       : frontendUrl.replace('://', '://api.'); // Custom fallback or handle properly
 
     const uniqueId = Math.random().toString(36).substring(2, 8);
-    const manifest: any = {
+    const isLocal = apiUrl.includes('localhost');
+    const manifest = {
       name: `HALLO Projects (${uniqueId})`,
       url: frontendUrl,
+      hook_attributes: {
+        url: isLocal ? 'https://example.com/api/webhooks/github' : `${apiUrl}/api/webhooks/github`,
+        active: !isLocal,
+      },
       redirect_url: `${frontendUrl}/providers/github-app/callback`,
       public: true,
       default_permissions: {
@@ -72,13 +77,6 @@ export class GithubAppController {
       },
       default_events: ['push', 'pull_request'],
     };
-
-    if (!apiUrl.includes('localhost')) {
-      manifest.hook_attributes = {
-        url: `${apiUrl}/api/webhooks/github`,
-        active: true,
-      };
-    }
 
     return manifest;
   }
