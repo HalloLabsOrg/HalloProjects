@@ -18,14 +18,6 @@ export const providersApi = {
   test: (id: string) =>
     apiClient.post<{ data: unknown }>(`/api/providers/${id}/test`).then((r) => r.data.data),
   remove: (id: string) => apiClient.delete(`/api/providers/${id}`),
-  getGithubAuthorizeUrl: () =>
-    apiClient
-      .get<{ url: string | null; configured: boolean }>('/api/providers/github-auth/authorize-url')
-      .then((r) => r.data),
-  githubCallback: (code: string) =>
-    apiClient
-      .post<{ data: unknown }>('/api/providers/github-auth/callback', { code })
-      .then((r) => r.data.data),
   getGithubAppStatus: () =>
     apiClient
       .get<{

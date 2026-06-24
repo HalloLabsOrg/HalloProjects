@@ -23,17 +23,12 @@ export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [method, setMethod] = useState<'app' | 'oauth' | 'pat'>('app');
+  const [method, setMethod] = useState<'app' | 'pat'>('app');
   const [form, setForm] = useState({ name: '', token: '', owner: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['providers'],
     queryFn: providersApi.list,
-  });
-
-  const { data: oauthConfig } = useQuery({
-    queryKey: ['github-oauth-config'],
-    queryFn: providersApi.getGithubAuthorizeUrl,
   });
 
   const { data: appStatus } = useQuery({
@@ -97,7 +92,6 @@ export default function ProvidersPage() {
   };
 
   const providers = (data as any[]) ?? [];
-  const oauthAvailable = oauthConfig?.configured ?? false;
   const appConfigured = appStatus?.configured ?? false;
 
   // Filter out the root GitHub App connection from the main sync list for a cleaner user experience
@@ -136,17 +130,6 @@ export default function ProvidersPage() {
                 onClick={() => setMethod('app')}
               >
                 GitHub App (No-env)
-              </button>
-              <button
-                type="button"
-                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  method === 'oauth'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-                onClick={() => setMethod('oauth')}
-              >
-                GitHub OAuth
               </button>
               <button
                 type="button"
@@ -201,38 +184,6 @@ export default function ProvidersPage() {
                     >
                       <Shield className="h-5 w-5" />
                       Create GitHub App Connection
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : method === 'oauth' ? (
-              <div className="space-y-4 py-4">
-                {oauthAvailable ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground text-center">
-                      Connect your GitHub account seamlessly via OAuth to import repositories.
-                    </p>
-                    <Button
-                      className="w-full flex items-center justify-center gap-2"
-                      size="lg"
-                      onClick={() => {
-                        if (oauthConfig?.url) {
-                          window.location.href = oauthConfig.url;
-                        }
-                      }}
-                    >
-                      <Plug className="h-5 w-5" />
-                      Connect with GitHub
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 text-center">
-                    <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
-                      GitHub OAuth is not configured on this server. Set up GITHUB_CLIENT_ID and
-                      GITHUB_CLIENT_SECRET in the server&apos;s .env file.
-                    </div>
-                    <Button className="w-full" variant="outline" onClick={() => setMethod('app')}>
-                      Use GitHub App setup instead (Recommended)
                     </Button>
                   </div>
                 )}
