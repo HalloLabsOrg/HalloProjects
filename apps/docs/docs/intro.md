@@ -77,3 +77,4 @@ Setelah instalasi, buka `https://your-domain` dan login dengan akun admin yang d
 - **Software House** — mengelola banyak project klien
 - **Research Lab** — mengelola aplikasi penelitian
 - **Campus IT Team** — mengelola berbagai aplikasi internal
+
