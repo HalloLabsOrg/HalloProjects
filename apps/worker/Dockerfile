@@ -25,7 +25,7 @@ COPY apps/api/prisma ./apps/api/prisma
 COPY apps/api/package.json ./apps/api/package.json
 # Generate Prisma Client so @prisma/client exports enums (e.g. DeploymentStatus).
 # DATABASE_URL only needs to validate the schema format; a dummy value is fine for generate.
-RUN cd apps/api && DATABASE_URL="postgresql://x:x@localhost:5432/x" npx prisma generate
+RUN cd apps/api && DATABASE_URL="postgresql://x:x@localhost:5432/x" npx prisma@5.22.0 generate
 RUN pnpm --filter @hallo/worker run build
 
 # Runner
