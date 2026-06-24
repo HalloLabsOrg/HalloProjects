@@ -9,7 +9,7 @@
     "providers/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev.js",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",

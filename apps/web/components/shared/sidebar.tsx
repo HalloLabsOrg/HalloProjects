@@ -13,6 +13,7 @@ import {
   LogOut,
   Activity,
   LayoutGrid,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
@@ -71,8 +72,17 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto border-t pt-4">
-        <div className="px-3 mb-2">
+      <div className="mt-auto border-t pt-4 space-y-1">
+        <Link
+          href="http://localhost:3001"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
+          <BookOpen className="h-4 w-4" />
+          Docs / Help
+        </Link>
+        <div className="px-3 py-2">
           <p className="text-sm font-medium truncate">{user?.name}</p>
           <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
         </div>
