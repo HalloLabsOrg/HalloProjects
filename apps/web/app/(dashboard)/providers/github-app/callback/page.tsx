@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function CallbackContent() {
   const router = useRouter();
@@ -14,6 +15,7 @@ function CallbackContent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const triggered = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   const code = searchParams.get('code');
   const installationId = searchParams.get('installation_id');
@@ -32,14 +34,14 @@ function CallbackContent() {
       router.refresh();
     },
     onError: (err: any) => {
-      const message = err?.response?.data?.message ?? 'Failed to exchange App creation code';
+      const message =
+        err?.response?.data?.message ?? err?.message ?? 'Failed to exchange App creation code';
+      setError(message);
       toast({
         title: 'App registration failed',
         description: message,
         variant: 'destructive',
       });
-      router.push('/providers');
-      router.refresh();
     },
   });
 
@@ -55,14 +57,16 @@ function CallbackContent() {
       router.refresh();
     },
     onError: (err: any) => {
-      const message = err?.response?.data?.message ?? 'Failed to complete GitHub App installation';
+      const message =
+        err?.response?.data?.message ??
+        err?.message ??
+        'Failed to complete GitHub App installation';
+      setError(message);
       toast({
         title: 'Installation failed',
         description: message,
         variant: 'destructive',
       });
-      router.push('/providers');
-      router.refresh();
     },
   });
 
@@ -87,6 +91,38 @@ function CallbackContent() {
       }
     }
   }, [code, installationId, router, toast, appCreationMutation, installationMutation]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Card className="w-full max-w-md border-destructive/50">
+          <CardHeader className="text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
+              <AlertCircle className="h-6 w-6" />
+            </div>
+            <CardTitle className="text-destructive">Connection Failed</CardTitle>
+            <CardDescription>
+              An error occurred during the GitHub App setup handshake.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center space-y-4 py-4">
+            <div className="w-full bg-destructive/5 border border-destructive/10 text-destructive-foreground p-3 rounded-lg text-sm font-mono break-all whitespace-pre-wrap">
+              {error}
+            </div>
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => {
+                window.location.href = '/providers';
+              }}
+            >
+              Return to Providers
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-[50vh]">

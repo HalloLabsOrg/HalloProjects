@@ -91,10 +91,6 @@ export class GithubAppController {
     const manifest = {
       name: `HALLO Projects (${uniqueId})`,
       url: frontendUrl,
-      hook_attributes: {
-        url: isLocal ? 'https://example.com/api/webhooks/github' : `${apiUrl}/api/webhooks/github`,
-        active: !isLocal,
-      },
       redirect_url: `${frontendUrl}/providers/github-app/callback`,
       public: true,
       default_permissions: {
@@ -103,7 +99,15 @@ export class GithubAppController {
         repository_hooks: 'write',
         pull_requests: 'write',
       },
-      default_events: ['push', 'pull_request'],
+      ...(!isLocal
+        ? {
+            hook_attributes: {
+              url: `${apiUrl}/api/webhooks/github`,
+              active: true,
+            },
+            default_events: ['push', 'pull_request'],
+          }
+        : {}),
     };
 
     return manifest;
