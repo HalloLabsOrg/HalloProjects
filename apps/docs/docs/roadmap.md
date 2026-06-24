@@ -150,8 +150,8 @@ sidebar_position: 14
 
 ### ❌ Cancel Deployment
 
-- [ ] `POST /deployments/:id/cancel`
-- [ ] Frontend: tombol Cancel saat deployment berjalan
+- [x] `POST /deployments/:id/cancel`
+- [x] Frontend: tombol Cancel saat deployment berjalan
 
 ### ✅ v0.2 DoD
 
@@ -181,8 +181,8 @@ sidebar_position: 14
 
 ### 🔑 Environment Variables
 
-- [ ] List, create, update, delete variables
-- [ ] Enkripsi + masking untuk secret variables
+- [x] List, create, update, delete variables
+- [x] Enkripsi + masking untuk secret variables
 - [ ] Reveal secret endpoint (dengan audit log)
 - [ ] Bulk import/export via `.env` format
 

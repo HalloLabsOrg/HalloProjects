@@ -31,7 +31,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          routeBasePath: '/',
+          routeBasePath: 'docs',
           editUrl: 'https://github.com/hallolabs/hallo-projects/tree/main/apps/docs/',
         },
         blog: false,
@@ -75,24 +75,24 @@ const config: Config = {
         {
           title: 'Get Started',
           items: [
-            { label: 'Overview', to: '/' },
-            { label: 'Installation', to: '/deployment/installation' },
-            { label: 'Architecture', to: '/architecture' },
+            { label: 'Overview', to: '/docs' },
+            { label: 'Installation', to: '/docs/deployment/installation' },
+            { label: 'Architecture', to: '/docs/architecture' },
           ],
         },
         {
           title: 'Integrations',
           items: [
-            { label: 'GitHub Provider', to: '/providers/github' },
-            { label: 'Coolify Provider', to: '/providers/coolify' },
-            { label: 'Template Engine', to: '/template-engine' },
+            { label: 'GitHub Provider', to: '/docs/providers/github' },
+            { label: 'Coolify Provider', to: '/docs/providers/coolify' },
+            { label: 'Template Engine', to: '/docs/template-engine' },
           ],
         },
         {
           title: 'Develop',
           items: [
-            { label: 'Contributing', to: '/contributing' },
-            { label: 'Roadmap', to: '/roadmap' },
+            { label: 'Contributing', to: '/docs/contributing' },
+            { label: 'Roadmap', to: '/docs/roadmap' },
             {
               label: 'GitHub',
               href: 'https://github.com/hallolabs/hallo-projects',

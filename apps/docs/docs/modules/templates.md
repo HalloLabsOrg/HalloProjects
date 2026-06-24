@@ -5,7 +5,7 @@ title: Templates Module
 
 # Templates Module
 
-Lihat [Template Engine](/template-engine) untuk dokumentasi lengkap sistem template.
+Lihat [Template Engine](/docs/template-engine) untuk dokumentasi lengkap sistem template.
 
 ## Endpoints
 

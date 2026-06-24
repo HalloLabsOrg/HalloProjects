@@ -66,4 +66,4 @@ export class GithubProvider implements RepositoryProvider {
 
 Webhook di-register otomatis ke setiap repository saat sync. URL: `https://your-domain/api/webhooks/github`
 
-Jika perlu register manual, lihat [Webhooks Module](/modules/webhooks).
+Jika perlu register manual, lihat [Webhooks Module](/docs/modules/webhooks).
