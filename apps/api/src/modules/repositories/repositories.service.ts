@@ -71,6 +71,12 @@ export class RepositoriesService {
     const results: { providerId: string; synced: number; errors: string[] }[] = [];
 
     for (const connection of providers) {
+      const config = this.decryptConfig(connection.config as Record<string, string>);
+      if (config.authMethod === 'github_app') {
+        // Skip root GitHub App connection as it does not own repositories
+        continue;
+      }
+
       const errors: string[] = [];
       let synced = 0;
 

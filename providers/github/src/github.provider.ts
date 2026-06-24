@@ -16,21 +16,37 @@ export class GithubProvider implements RepositoryProvider {
   async listRepositories(): Promise<SdkRepository[]> {
     const repos: SdkRepository[] = [];
     let page = 1;
+    const isInstallationToken = this.config.token?.startsWith('ghs_');
 
     while (true) {
-      const { data } = await this.octokit.repos.listForAuthenticatedUser({
-        per_page: 100,
-        page,
-        sort: 'updated',
-      });
+      if (isInstallationToken) {
+        const { data } = await this.octokit.apps.listReposAccessibleToInstallation({
+          per_page: 100,
+          page,
+        });
 
-      if (data.length === 0) break;
+        if (!data.repositories || data.repositories.length === 0) break;
 
-      for (const repo of data) {
-        repos.push(this.mapRepo(repo));
+        for (const repo of data.repositories) {
+          repos.push(this.mapRepo(repo));
+        }
+
+        if (data.repositories.length < 100) break;
+      } else {
+        const { data } = await this.octokit.repos.listForAuthenticatedUser({
+          per_page: 100,
+          page,
+          sort: 'updated',
+        });
+
+        if (data.length === 0) break;
+
+        for (const repo of data) {
+          repos.push(this.mapRepo(repo));
+        }
+
+        if (data.length < 100) break;
       }
-
-      if (data.length < 100) break;
       page++;
     }
 
