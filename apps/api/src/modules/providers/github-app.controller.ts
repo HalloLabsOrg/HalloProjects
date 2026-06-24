@@ -64,14 +64,14 @@ export class GithubAppController {
       url: frontendUrl,
       hook_attributes: {
         url: `${apiUrl}/api/webhooks/github`,
-        active: true,
+        active: !apiUrl.includes('localhost'),
       },
       redirect_url: `${frontendUrl}/providers/github-app/callback`,
       public: true,
       default_permissions: {
         contents: 'write',
         metadata: 'read',
-        webhooks: 'write',
+        repository_hooks: 'write',
         pull_requests: 'write',
       },
       default_events: ['push', 'pull_request'],
