@@ -12,6 +12,7 @@ import {
   ScrollText,
   LogOut,
   Activity,
+  LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
@@ -28,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Providers', href: '/providers', icon: Plug },
   { label: 'Repositories', href: '/repositories', icon: GitBranch },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Templates', href: '/templates', icon: LayoutGrid },
   { label: 'Deployments', href: '/deployments', icon: Rocket },
   { label: 'Monitoring', href: '/monitoring', icon: Activity },
   { label: 'Users', href: '/users', icon: Users, adminOnly: true },

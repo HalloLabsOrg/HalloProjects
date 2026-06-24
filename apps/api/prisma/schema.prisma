@@ -264,18 +264,20 @@ model AuditLog {
 }
 
 model Template {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  version     String
-  author      String?
-  isActive    Boolean  @default(true) @map("is_active")
-  schema      Json
-  files       Json
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  name         String
+  slug         String
+  description  String?
+  version      String
+  author       String?
+  isActive     Boolean  @default(true) @map("is_active")
+  previewImage String?  @map("preview_image")
+  schema       Json
+  files        Json
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
+  @@unique([slug, version])
   @@map("templates")
 }
 

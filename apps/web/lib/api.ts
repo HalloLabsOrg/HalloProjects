@@ -188,3 +188,34 @@ export const monitoringApi = {
       }>(`/api/monitoring/${serviceId}/history`, { params })
       .then((r) => r.data.data),
 };
+
+// Templates
+export const templatesApi = {
+  list: (params?: { all?: boolean }) =>
+    apiClient.get<any[]>('/api/templates', { params }).then((r) => r.data),
+  get: (id: string) => apiClient.get<any>(`/api/templates/${id}`).then((r) => r.data),
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient
+      .post<any>('/api/templates', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data);
+  },
+  toggle: (id: string, isActive: boolean) =>
+    apiClient.patch<any>(`/api/templates/${id}/toggle`, { isActive }).then((r) => r.data),
+  delete: (id: string) => apiClient.delete<any>(`/api/templates/${id}`).then((r) => r.data),
+  dryRun: (id: string, values: Record<string, any>) =>
+    apiClient
+      .post<Record<string, string>>(`/api/templates/${id}/dry-run`, { values })
+      .then((r) => r.data),
+  apply: (id: string, projectId: string, environmentId: string, values: Record<string, any>) =>
+    apiClient
+      .post<{ success: boolean; files: Record<string, string> }>(`/api/templates/${id}/apply`, {
+        projectId,
+        environmentId,
+        values,
+      })
+      .then((r) => r.data),
+};
