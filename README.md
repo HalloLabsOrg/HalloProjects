@@ -9,6 +9,8 @@
 <h1 align="center">HALLO Projects</h1>
 
 <p align="center">
+  <strong>An open-source & self-hosted Project Control Plane to unify all your project activities from repository to production in one centralized dashboard.</strong>
+  <br />
   <strong>Project Control Plane open-source & self-hosted untuk menyatukan seluruh aktivitas project dari repository hingga production dalam satu dashboard terpusat.</strong>
 </p>
 
@@ -80,7 +82,7 @@ graph TD
 HALLO Projects solves traditional server management overhead through practical use-cases:
 
 1. **Server Cost Efficiency**: Isolate multiple web services (API, frontend, workers, database) into secure Docker networks routed automatically behind Caddy Reverse Proxy sharing the same VPS.
-2. **Push-to-Deploy**: Connect your GitHub PAT token. HALLO Projects configures repository webhooks automatically. Pushing commits triggers live builds immediately.
+2. **Push-to-Deploy**: Connect your GitHub App (via Manifest Setup without `.env` configuration) or classical PAT token. HALLO Projects configures repository webhooks automatically. Pushing commits triggers live builds immediately.
 3. **Secret Security**: Encrypt env variables in the database using AES-256-GCM and mask (`***`) secret variables in UI/API outputs.
 4. **Logs & Control**: Cancel hanging builds or view live stdout logs from the central UI without logging into target servers via SSH.
 
@@ -112,7 +114,7 @@ To update to the latest release, enter your installation folder and run the upda
 
 1. **Access Dashboard**: Open your browser at the domain you configured during setup.
 2. **Default Credentials**: Log in using the admin email and password created during installation.
-3. **Link GitHub Provider**: Go to **Providers**, add your GitHub Personal Access Token (PAT).
+3. **Link GitHub Provider**: Go to **Providers**, connect using a **GitHub App** (Recommended - registers automatically via Manifest Flow) or add your classical **Personal Access Token (PAT)**.
 4. **Create a Project**: Go to **Projects**, register a workspace and link a repository to trigger your first deploy.
 
 ---
@@ -164,7 +166,7 @@ HalloProjects bertindak sebagai jembatan orkestrasi antara Repositori Kode dan D
 HALLO Projects memecahkan masalah manajemen server tradisional melalui beberapa skenario praktis:
 
 1. **Konsolidasi Aplikasi pada Satu VPS (Server Cost Efficiency)**: Mengisolasi setiap service menggunakan container Docker secara otomatis dan mengaturnya di balik Caddy Reverse Proxy dengan routing sub-domain otomatis.
-2. **Auto-Deployment Berbasis Git (Push-to-Deploy)**: Hubungkan repositori GitHub Anda menggunakan Personal Access Token (PAT). Setiap kali Anda melakukan `git push` ke branch yang ditentukan, server akan melakukan pull, build, dan deploy versi terbaru secara langsung.
+2. **Auto-Deployment Berbasis Git (Push-to-Deploy)**: Hubungkan GitHub App (melalui Manifest Setup tanpa ribet setup `.env`) atau Personal Access Token (PAT) klasik Anda. Setiap kali Anda melakukan `git push` ke branch yang ditentukan, server akan melakukan pull, build, dan deploy versi terbaru secara langsung.
 3. **Keamanan Variabel Lingkungan & Secret (Secret Protection)**: Semua variabel lingkungan dienkripsi di database menggunakan AES-256-GCM. Variabel bertipe _Secret_ secara otomatis disamarkan (`***`) di API dan dashboard.
 4. **Kontrol dan Pemantauan Deployment (Orchestration & Logs)**: Dashboard menampilkan status deployment secara real-time disertai log build langsung. Anda juga dapat membatalkan proses deployment yang sedang berjalan hanya dengan satu klik tombol "Cancel".
 
@@ -196,7 +198,7 @@ Untuk melakukan update ke versi terbaru, masuk ke folder instalasi dan jalankan 
 
 1. **Akses Dashboard**: Setelah instalasi selesai, buka browser Anda menuju domain yang Anda masukkan (misal: `http://domain-anda.com`).
 2. **Kredensial Default**: Masuk menggunakan email admin dan password yang Anda konfigurasi di awal pemasangan.
-3. **Hubungkan GitHub Provider**: Masuk ke menu **Providers**, tambahkan koneksi GitHub baru dengan memasukkan Personal Access Token (PAT) klasik Anda.
+3. **Hubungkan GitHub Provider**: Masuk ke menu **Providers**, hubungkan menggunakan **GitHub App** (Direkomendasikan - terdaftar otomatis via Manifest Flow) or masukkan **Personal Access Token (PAT)** klasik Anda.
 4. **Buat Project Baru**: Masuk ke menu **Projects**, buat workspace project baru dan hubungkan repositori Git Anda untuk memulai deployment pertama.
 
 ---
