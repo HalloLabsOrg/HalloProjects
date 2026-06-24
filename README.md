@@ -108,7 +108,7 @@ To update to the latest release, enter your installation folder and run the upda
 
 ### 📖 Full Documentation
 Detailed configurations, custom templates schemas, and provider SDK extensions are available:
-* **Docs Portal**: `http://docs.your-domain.com` (or `http://localhost:3001` in local dev).
+* **Docs Portal**: [https://HalloLabsOrg.github.io/HalloProjects/](https://HalloLabsOrg.github.io/HalloProjects/) (or `http://localhost:3001` in local dev).
 
 ---
 
@@ -179,7 +179,7 @@ Untuk melakukan update ke versi terbaru, masuk ke folder instalasi dan jalankan 
 
 ### 📖 Dokumentasi Lengkap
 Dokumentasi lengkap, panduan konfigurasi variabel, modul reference, skema pembuatan template kustom, dan panduan kontributor dapat diakses melalui server dokumentasi terintegrasi:
-* **Server Docs**: `http://docs.domain-anda.com` (atau `http://localhost:3001` di lingkungan pengembangan lokal).
+* **Server Docs**: [https://HalloLabsOrg.github.io/HalloProjects/](https://HalloLabsOrg.github.io/HalloProjects/) (atau `http://localhost:3001` di lingkungan pengembangan lokal).
 
 ---
 
