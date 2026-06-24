@@ -7,21 +7,21 @@ import { useAuthStore } from '@/stores/auth.store';
 export function useAuth({ requireAuth = true } = {}) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, token, fetchMe } = useAuthStore();
+  const { user, token, fetchMe, hasHydrated } = useAuthStore();
 
   useEffect(() => {
-    if (token && !user) {
+    if (hasHydrated && token && !user) {
       fetchMe();
     }
-  }, [token, user, fetchMe]);
+  }, [token, user, fetchMe, hasHydrated]);
 
   useEffect(() => {
-    if (requireAuth && !token && pathname !== '/login') {
+    if (hasHydrated && requireAuth && !token && pathname !== '/login') {
       router.replace('/login');
     }
-  }, [token, requireAuth, pathname, router]);
+  }, [token, requireAuth, pathname, router, hasHydrated]);
 
-  return { user, token, isAuthenticated: !!token };
+  return { user, token, isAuthenticated: !!token, hasHydrated };
 }
 
 export function useRequireAdmin() {
