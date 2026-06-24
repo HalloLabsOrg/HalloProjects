@@ -26,27 +26,33 @@ setTimeout(() => {
 }, 4000);
 
 let isExiting = false;
-// Clean up and propagate termination signals
-const handleExit = () => {
+
+const cleanup = () => {
   if (isExiting) return;
   isExiting = true;
 
-  console.log('\n👋 Stopping development servers...');
-  try {
-    devProcess.kill('SIGINT');
-  } catch (e) {}
-
-  console.log('🐳 Stopping database containers...');
+  console.log('\n🐳 Stopping database containers...');
   try {
     execSync('docker compose -f docker/docker-compose.dev.yml down', { stdio: 'inherit' });
   } catch (err) {
     console.error('❌ Failed to stop docker-compose containers:', err.message);
   }
-
-  process.exit();
 };
 
-devProcess.on('exit', handleExit);
-process.on('SIGINT', handleExit);
-process.on('SIGTERM', handleExit);
-process.on('exit', handleExit);
+// When devProcess exits, perform cleanup and exit the parent process
+devProcess.on('exit', (code) => {
+  cleanup();
+  process.exit(code || 0);
+});
+
+// If the parent process receives SIGINT or SIGTERM, we don't exit immediately;
+// instead, we let the child process handle it, which will trigger the 'exit' event.
+process.on('SIGINT', () => {
+  // Let devProcess exit first, which will trigger the exit listener above.
+});
+
+process.on('SIGTERM', () => {
+  try {
+    devProcess.kill('SIGTERM');
+  } catch (e) {}
+});
