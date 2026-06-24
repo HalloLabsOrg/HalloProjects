@@ -5,6 +5,7 @@ import { getQueueToken } from '@nestjs/bull';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DeploymentStatus } from '@prisma/client';
 import { QUEUE_NAMES, JOB_NAMES } from '@hallo/shared';
+import { ProviderFactory } from '../providers/provider.factory';
 
 const mockPrisma = {
   deployment: {
@@ -20,6 +21,11 @@ const mockPrisma = {
 };
 
 const mockQueue = { add: jest.fn() };
+
+const mockProviderFactory = {
+  getRepositoryProvider: jest.fn(),
+  getDeploymentProvider: jest.fn(),
+};
 
 const mockService = {
   id: 'svc-1',
@@ -41,6 +47,7 @@ describe('DeploymentsService', () => {
         DeploymentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: getQueueToken(QUEUE_NAMES.DEPLOYMENTS), useValue: mockQueue },
+        { provide: ProviderFactory, useValue: mockProviderFactory },
       ],
     }).compile();
 
