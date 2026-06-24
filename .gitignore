@@ -36,3 +36,8 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Internal technical documentation (not for repo)
+HALLO_Projects_Technical_Documentation.docx
+HALLO_Projects_Technical_Documentation.pdf
+TECHNICAL_DOCUMENTATION.md
