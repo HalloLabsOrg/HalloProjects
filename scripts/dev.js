@@ -12,8 +12,8 @@ setTimeout(() => {
   console.log('\n🌐 Opening main application (http://localhost:3000)...');
   spawn('open', ['http://localhost:3000'], { shell: true });
 
-  console.log('📚 Opening documentation (http://localhost:3001)...\n');
-  spawn('open', ['http://localhost:3001'], { shell: true });
+  console.log('📚 Opening documentation (http://localhost:3001/HalloProjects/)...\n');
+  spawn('open', ['http://localhost:3001/HalloProjects/'], { shell: true });
 }, 4000);
 
 // Clean up and propagate termination signals
