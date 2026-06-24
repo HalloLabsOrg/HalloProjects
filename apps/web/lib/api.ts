@@ -46,8 +46,14 @@ export const repositoriesApi = {
     apiClient
       .get<{ data: unknown[]; meta: unknown }>('/api/repositories', { params })
       .then((r) => r.data),
-  sync: (providerId?: string) =>
-    apiClient.post('/api/repositories/sync', {}, { params: { providerId } }).then((r) => r.data),
+  listRemote: (providerId: string) =>
+    apiClient
+      .get<any[]>('/api/repositories/remote', { params: { providerId } })
+      .then((r) => r.data),
+  sync: (payload?: { providerId?: string; externalIds?: string[] }) =>
+    apiClient
+      .post('/api/repositories/sync', { externalIds: payload?.externalIds }, { params: { providerId: payload?.providerId } })
+      .then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
 };

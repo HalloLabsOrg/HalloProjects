@@ -290,10 +290,7 @@ export class GithubAppController {
       });
     }
 
-    // Auto-sync repositories
-    this.providersService.syncRepositories(connection.id).catch((err) => {
-      console.error(`Failed to auto-sync repositories for installation ${connection.id}:`, err);
-    });
+
 
     await this.auditLogsService.log({
       action: AuditAction.PROVIDER_CONNECTED,

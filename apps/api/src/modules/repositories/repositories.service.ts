@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProviderFactory } from '../providers/provider.factory';
 import { paginateResponse, paginateArgs } from '../../common/helpers/paginate.helper';
@@ -44,10 +44,44 @@ export class RepositoriesService {
     return repo;
   }
 
+  async delete(id: string) {
+    const repo = await this.findOne(id);
+
+    const serviceCount = await this.prisma.service.count({
+      where: { repositoryId: id },
+    });
+
+    if (serviceCount > 0) {
+      throw new BadRequestException(
+        'Cannot delete repository because it is actively used by one or more services.',
+      );
+    }
+
+    return this.prisma.repository.delete({
+      where: { id },
+    });
+  }
+
   async getBranches(id: string) {
     const repo = await this.findOne(id);
     const provider = await this.providerFactory.getRepositoryProvider(repo.providerId);
     return provider.getBranches(repo.externalId);
+  }
+
+  async getRemoteRepositories(providerId: string): Promise<any[]> {
+    const connection = await this.prisma.providerConnection.findUnique({
+      where: { id: providerId, type: 'GITHUB', isActive: true },
+    });
+    if (!connection) {
+      throw new NotFoundException(`Active GitHub provider ${providerId} not found`);
+    }
+    const config = this.decryptConfig(connection.config as Record<string, string>);
+    if (config.authMethod === 'github_app') {
+      return [];
+    }
+
+    const githubProvider = await this.providerFactory.getRepositoryProvider(providerId);
+    return githubProvider.listRepositories();
   }
 
   private decryptConfig(config: Record<string, string>): Record<string, string> {
@@ -62,7 +96,7 @@ export class RepositoriesService {
     return result;
   }
 
-  async sync(providerId?: string) {
+  async sync(providerId?: string, externalIds?: string[]) {
     const where = providerId ? { id: providerId } : {};
     const providers = await this.prisma.providerConnection.findMany({
       where: { ...where, type: 'GITHUB', isActive: true },
@@ -85,6 +119,9 @@ export class RepositoriesService {
         const repos = await githubProvider.listRepositories();
 
         for (const repo of repos) {
+          if (externalIds && !externalIds.includes(repo.externalId)) {
+            continue;
+          }
           try {
             await this.prisma.repository.upsert({
               where: {

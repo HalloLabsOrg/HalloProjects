@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Req, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RepositoriesService } from './repositories.service';
 import { ParsePaginationPipe } from '../../common/pipes/parse-pagination.pipe';
@@ -25,6 +25,13 @@ export class RepositoriesController {
     return this.repositoriesService.findAll(pagination);
   }
 
+  @Get('remote')
+  @ApiOperation({ summary: 'List remote repositories directly from GitHub' })
+  @ApiQuery({ name: 'providerId', required: true })
+  getRemote(@Query('providerId') providerId: string) {
+    return this.repositoriesService.getRemoteRepositories(providerId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a repository' })
   findOne(@Param('id') id: string) {
@@ -42,16 +49,17 @@ export class RepositoriesController {
   @ApiQuery({ name: 'providerId', required: false })
   async sync(
     @Query('providerId') providerId: string | undefined,
+    @Body() body: { externalIds?: string[] },
     @CurrentUser() user: User,
     @Req() req: Request,
   ) {
-    const result = await this.repositoriesService.sync(providerId);
+    const result = await this.repositoriesService.sync(providerId, body?.externalIds);
     const totalSynced = result.results.reduce((sum, r) => sum + r.synced, 0);
     await this.auditLogsService.log({
       action: AuditAction.REPOSITORY_SYNCED,
       userId: user.id,
       entityType: 'Repository',
-      metadata: { providerId, syncedCount: totalSynced },
+      metadata: { providerId, syncedCount: totalSynced, externalIds: body?.externalIds },
       req,
     });
     return result;

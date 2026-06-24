@@ -52,10 +52,7 @@ export class ProvidersService {
       },
     });
 
-    // Auto-sync repositories which triggers webhook registration
-    this.repositoriesService.sync(connection.id).catch((err) => {
-      console.error(`Failed to auto-sync repositories for new provider ${connection.id}:`, err);
-    });
+
 
     return this.maskSecrets(connection);
   }
@@ -76,10 +73,7 @@ export class ProvidersService {
       },
     });
 
-    // Auto-sync repositories which triggers webhook registration
-    this.repositoriesService.sync(connection.id).catch((err) => {
-      console.error(`Failed to auto-sync repositories for new provider ${connection.id}:`, err);
-    });
+
 
     return this.maskSecrets(connection);
   }
