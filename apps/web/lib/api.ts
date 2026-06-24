@@ -47,7 +47,7 @@ export const repositoriesApi = {
       .get<{ data: unknown[]; meta: unknown }>('/api/repositories', { params })
       .then((r) => r.data),
   sync: (providerId?: string) =>
-    apiClient.post('/api/repositories/sync', null, { params: { providerId } }).then((r) => r.data),
+    apiClient.post('/api/repositories/sync', {}, { params: { providerId } }).then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
 };
