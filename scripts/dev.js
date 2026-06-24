@@ -1,4 +1,13 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
+
+console.log('🐳 Starting local Postgres and Redis database containers...');
+try {
+  execSync('docker compose -f docker/docker-compose.dev.yml up -d --remove-orphans', {
+    stdio: 'inherit',
+  });
+} catch (err) {
+  console.error('❌ Failed to start docker-compose containers:', err.message);
+}
 
 console.log('🚀 Starting HALLO Projects development workspace...');
 
@@ -16,12 +25,28 @@ setTimeout(() => {
   spawn('open', ['http://localhost:3001/HalloProjects/'], { shell: true });
 }, 4000);
 
+let isExiting = false;
 // Clean up and propagate termination signals
 const handleExit = () => {
+  if (isExiting) return;
+  isExiting = true;
+
   console.log('\n👋 Stopping development servers...');
-  devProcess.kill('SIGINT');
+  try {
+    devProcess.kill('SIGINT');
+  } catch (e) {}
+
+  console.log('🐳 Stopping database containers...');
+  try {
+    execSync('docker compose -f docker/docker-compose.dev.yml down', { stdio: 'inherit' });
+  } catch (err) {
+    console.error('❌ Failed to stop docker-compose containers:', err.message);
+  }
+
   process.exit();
 };
 
+devProcess.on('exit', handleExit);
 process.on('SIGINT', handleExit);
 process.on('SIGTERM', handleExit);
+process.on('exit', handleExit);
