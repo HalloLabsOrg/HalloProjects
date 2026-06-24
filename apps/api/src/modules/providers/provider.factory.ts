@@ -48,7 +48,7 @@ export class ProviderFactory {
 
       // 3. Request Installation Access Token (IAT)
       const response = await fetch(
-        `https://api.github.com/app-installations/${config.installationId}/access_tokens`,
+        `https://api.github.com/app/installations/${config.installationId}/access_tokens`,
         {
           method: 'POST',
           headers: {
