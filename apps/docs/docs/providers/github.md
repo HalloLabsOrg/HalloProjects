@@ -5,9 +5,29 @@ title: GitHub Provider
 
 # GitHub Provider
 
-Integrasi dengan GitHub menggunakan Personal Access Token (PAT).
+Integrasi dengan GitHub dapat menggunakan tiga metode: **GitHub App (Sangat Direkomendasikan)**, **GitHub OAuth (Login Satu-Klik)**, atau **Personal Access Token (PAT)**.
 
-## Setup
+---
+
+## Opsi 1: GitHub App (Rekomendasi Utama — Tanpa Konfigurasi .env)
+
+Metode ini adalah cara termudah dan paling aman untuk menghubungkan instance self-hosted HALLO Projects dengan GitHub Anda, mendukung **multi-akun** (menghubungkan banyak akun/organisasi personal secara bersamaan) tanpa harus menyentuh file konfigurasi `.env` server.
+
+### Langkah-langkah:
+
+1. Buka **Providers** di Dashboard HALLO Projects.
+2. Klik tombol **Connect GitHub**.
+3. Di tab **GitHub App (No-env)**, klik **Create GitHub App Connection**.
+4. Anda akan diarahkan ke halaman pembuatan GitHub App di akun GitHub Anda (kredensial callback dan webhook telah diformulasikan secara otomatis).
+5. Beri nama aplikasi Anda (misalnya `HALLO Projects Instance`), lalu klik **Create GitHub App**.
+6. Setelah selesai, GitHub secara otomatis menyimpan kredensial (App ID, Secret, Private Key) kembali ke database dan mengarahkan Anda kembali ke Dashboard.
+7. Di Dashboard, klik tombol **Connect / Install on Account** untuk mengaktifkan aplikasi pada akun personal atau organisasi Anda dan memilih repositori mana yang ingin Anda sinkronkan.
+
+---
+
+## Opsi 2: Personal Access Token (PAT)
+
+Jika Anda tidak dapat menggunakan GitHub App atau ingin menggunakan token akses statis tradisional:
 
 ### 1. Generate Personal Access Token
 
@@ -20,7 +40,7 @@ Integrasi dengan GitHub menggunakan Personal Access Token (PAT).
 
 ### 2. Connect di HALLO Projects
 
-Buka **Providers → Add Provider → GitHub**, isi:
+Buka **Providers → Add Provider → GitHub**, pilih tab **PAT**, lalu isi:
 
 | Field                 | Value                                         |
 | --------------------- | --------------------------------------------- |

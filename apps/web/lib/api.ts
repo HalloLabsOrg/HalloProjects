@@ -26,6 +26,24 @@ export const providersApi = {
     apiClient
       .post<{ data: unknown }>('/api/providers/github-auth/callback', { code })
       .then((r) => r.data.data),
+  getGithubAppStatus: () =>
+    apiClient
+      .get<{
+        configured: boolean;
+        appName: string | null;
+        htmlUrl: string | null;
+      }>('/api/providers/github-app/status')
+      .then((r) => r.data),
+  getGithubAppManifestPayload: (frontendUrl: string) =>
+    apiClient
+      .post<any>('/api/providers/github-app/manifest-payload', { frontendUrl })
+      .then((r) => r.data),
+  githubAppCallback: (code: string) =>
+    apiClient.post<any>('/api/providers/github-app/callback', { code }).then((r) => r.data),
+  githubAppInstall: (installationId: string) =>
+    apiClient
+      .post<any>('/api/providers/github-app/installations', { installationId })
+      .then((r) => r.data),
 };
 
 // Repositories

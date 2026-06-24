@@ -16,14 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Plug, Trash2, CheckCircle, Loader2 } from 'lucide-react';
+import { Plug, Trash2, CheckCircle, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [method, setMethod] = useState<'oauth' | 'pat'>('oauth');
+  const [method, setMethod] = useState<'app' | 'oauth' | 'pat'>('app');
   const [form, setForm] = useState({ name: '', token: '', owner: '' });
 
   const { data, isLoading } = useQuery({
@@ -34,6 +34,11 @@ export default function ProvidersPage() {
   const { data: oauthConfig } = useQuery({
     queryKey: ['github-oauth-config'],
     queryFn: providersApi.getGithubAuthorizeUrl,
+  });
+
+  const { data: appStatus } = useQuery({
+    queryKey: ['github-app-status'],
+    queryFn: providersApi.getGithubAppStatus,
   });
 
   const createMutation = useMutation({
@@ -63,27 +68,75 @@ export default function ProvidersPage() {
     mutationFn: providersApi.remove,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
       toast({ title: 'Provider removed' });
     },
   });
 
+  const handleCreateApp = async () => {
+    try {
+      const payload = await providersApi.getGithubAppManifestPayload(window.location.origin);
+      const formElement = document.createElement('form');
+      formElement.method = 'POST';
+      formElement.action = 'https://github.com/settings/apps/new';
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'manifest';
+      input.value = JSON.stringify(payload);
+
+      formElement.appendChild(input);
+      document.body.appendChild(formElement);
+      formElement.submit();
+    } catch (err) {
+      toast({
+        title: 'Failed to initiate GitHub App creation',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const providers = (data as any[]) ?? [];
   const oauthAvailable = oauthConfig?.configured ?? false;
+  const appConfigured = appStatus?.configured ?? false;
+
+  // Filter out the root GitHub App connection from the main sync list for a cleaner user experience
+  const displayProviders = providers.filter((p) => p.config?.authMethod !== 'github_app');
+  const rootAppProvider = providers.find((p) => p.config?.authMethod === 'github_app');
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Providers</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Providers</h1>
+          <p className="text-muted-foreground text-sm">
+            Manage your Git and deployment platform connections.
+          </p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>Connect GitHub</Button>
+            <Button className="flex items-center gap-2">
+              <Plug className="h-4 w-4" />
+              Connect GitHub
+            </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Connect GitHub Provider</DialogTitle>
             </DialogHeader>
 
             <div className="flex border-b border-border my-2">
+              <button
+                type="button"
+                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
+                  method === 'app'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setMethod('app')}
+              >
+                GitHub App (No-env)
+              </button>
               <button
                 type="button"
                 className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
@@ -104,17 +157,60 @@ export default function ProvidersPage() {
                 }`}
                 onClick={() => setMethod('pat')}
               >
-                Personal Access Token (PAT)
+                PAT
               </button>
             </div>
 
-            {method === 'oauth' ? (
+            {method === 'app' ? (
+              <div className="space-y-4 py-4">
+                {appConfigured ? (
+                  <div className="space-y-4 text-center">
+                    <div className="flex items-center justify-center p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
+                      <Shield className="h-5 w-5 mr-2 flex-shrink-0" />
+                      <span>
+                        GitHub App <strong>{appStatus?.appName}</strong> is fully configured.
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Install the application on any GitHub account or organization to start syncing
+                      its repositories.
+                    </p>
+                    <Button
+                      className="w-full flex items-center justify-center gap-2"
+                      size="lg"
+                      onClick={() => {
+                        if (appStatus?.htmlUrl) {
+                          window.location.href = `${appStatus.htmlUrl}/installations/new`;
+                        }
+                      }}
+                    >
+                      <Plug className="h-5 w-5" />
+                      Connect / Install on Account
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground text-center">
+                      Register a self-hosted GitHub App dynamically. Zero environment variable
+                      configuration required.
+                    </p>
+                    <Button
+                      className="w-full flex items-center justify-center gap-2"
+                      size="lg"
+                      onClick={handleCreateApp}
+                    >
+                      <Shield className="h-5 w-5" />
+                      Create GitHub App Connection
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : method === 'oauth' ? (
               <div className="space-y-4 py-4">
                 {oauthAvailable ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground text-center">
-                      Connect your GitHub account seamlessly to import public and private
-                      repositories.
+                      Connect your GitHub account seamlessly via OAuth to import repositories.
                     </p>
                     <Button
                       className="w-full flex items-center justify-center gap-2"
@@ -132,11 +228,11 @@ export default function ProvidersPage() {
                 ) : (
                   <div className="space-y-4 text-center">
                     <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
-                      GitHub OAuth is not configured on this server. To enable one-click login, set
-                      up GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the server&apos;s .env file.
+                      GitHub OAuth is not configured on this server. Set up GITHUB_CLIENT_ID and
+                      GITHUB_CLIENT_SECRET in the server&apos;s .env file.
                     </div>
-                    <Button className="w-full" variant="outline" onClick={() => setMethod('pat')}>
-                      Use Personal Access Token instead
+                    <Button className="w-full" variant="outline" onClick={() => setMethod('app')}>
+                      Use GitHub App setup instead (Recommended)
                     </Button>
                   </div>
                 )}
@@ -184,6 +280,51 @@ export default function ProvidersPage() {
         </Dialog>
       </div>
 
+      {/* GitHub App Settings Card (if configured) */}
+      {rootAppProvider && (
+        <Card className="border border-border bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-primary animate-pulse" />
+                <CardTitle className="text-base font-semibold">Instance GitHub App</CardTitle>
+              </div>
+              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                Active App
+              </Badge>
+            </div>
+            <CardDescription>
+              Registered App Name:{' '}
+              <strong className="text-foreground">{rootAppProvider.name}</strong>. Used to
+              authenticate multiple connected developer accounts without static secrets.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (appStatus?.htmlUrl) {
+                  window.location.href = `${appStatus.htmlUrl}/installations/new`;
+                }
+              }}
+            >
+              <Plug className="h-3 w-3 mr-1" />
+              Link New Account
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => deleteMutation.mutate(rootAppProvider.id)}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Remove App
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -197,56 +338,59 @@ export default function ProvidersPage() {
             </Card>
           ))}
         </div>
-      ) : providers.length === 0 ? (
+      ) : displayProviders.length === 0 ? (
         <EmptyState
           icon={Plug}
           title="No providers connected"
-          description="Connect a GitHub account to start syncing repositories."
+          description="Connect a GitHub account (via GitHub App, OAuth, or PAT) to start syncing repositories."
           action={{ label: 'Connect GitHub', onClick: () => setOpen(true) }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {providers.map((provider: any) => (
-            <Card key={provider.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{provider.name}</CardTitle>
-                  <Badge variant={provider.isActive ? 'default' : 'secondary'}>
-                    {provider.type}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {provider.lastTestedAt
-                    ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleDateString()}`
-                    : 'Not tested yet'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => testMutation.mutate(provider.id)}
-                  disabled={testMutation.isPending}
-                >
-                  {testMutation.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                  )}
-                  Test
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => deleteMutation.mutate(provider.id)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Remove
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {displayProviders.map((provider: any) => {
+            const authMethod = provider.config?.authMethod ?? 'pat';
+            return (
+              <Card key={provider.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{provider.name}</CardTitle>
+                    <Badge variant={provider.isActive ? 'default' : 'secondary'}>
+                      {authMethod === 'github_app_installation' ? 'GitHub App' : provider.type}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    {provider.lastTestedAt
+                      ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleDateString()}`
+                      : 'Not tested yet'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => testMutation.mutate(provider.id)}
+                    disabled={testMutation.isPending}
+                  >
+                    {testMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    )}
+                    Test
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteMutation.mutate(provider.id)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Remove
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

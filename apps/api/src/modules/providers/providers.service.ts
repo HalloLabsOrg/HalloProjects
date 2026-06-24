@@ -11,8 +11,9 @@ import { ProviderFactory } from './provider.factory';
 import { CreateGithubProviderDto, CreateCoolifyProviderDto } from './dto/create-provider.dto';
 import { ProviderType } from '@prisma/client';
 import { RepositoriesService } from '../repositories/repositories.service';
+import * as crypto from 'crypto';
 
-const SECRET_FIELDS = ['token', 'apiToken', 'webhookSecret'];
+const SECRET_FIELDS = ['token', 'apiToken', 'webhookSecret', 'privateKey', 'clientSecret'];
 
 @Injectable()
 export class ProvidersService {
@@ -131,6 +132,46 @@ export class ProvidersService {
   async remove(id: string) {
     await this.findOne(id);
     await this.prisma.providerConnection.delete({ where: { id } });
+  }
+
+  async syncRepositories(connectionId: string) {
+    return this.repositoriesService.sync(connectionId);
+  }
+
+  generateGithubAppJwt(appId: string, privateKeyPem: string): string {
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT',
+    };
+
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iat: now - 60, // 1 minute in past to allow clock drift
+      exp: now + 10 * 60, // 10 minutes max
+      iss: appId,
+    };
+
+    const base64UrlEncode = (str: string) => {
+      return Buffer.from(str)
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+    };
+
+    const headerEncoded = base64UrlEncode(JSON.stringify(header));
+    const payloadEncoded = base64UrlEncode(JSON.stringify(payload));
+
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(`${headerEncoded}.${payloadEncoded}`);
+
+    const signatureEncoded = sign
+      .sign(privateKeyPem, 'base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    return `${headerEncoded}.${payloadEncoded}.${signatureEncoded}`;
   }
 
   private encryptConfig(config: Record<string, string>): Record<string, string> {
