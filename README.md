@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="logo.svg" alt="HALLO Projects Logo" width="200" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="logo-light.svg">
+    <img alt="HALLO Projects Logo" src="logo-light.svg" width="200" />
+  </picture>
 </p>
 
 <h1 align="center">HALLO Projects</h1>

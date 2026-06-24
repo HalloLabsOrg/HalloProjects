@@ -53,7 +53,8 @@ const config: Config = {
       title: 'HALLO Projects',
       logo: {
         alt: 'HALLO Projects Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo-light.svg',
+        srcDark: 'img/logo-dark.svg',
       },
       items: [
         {
