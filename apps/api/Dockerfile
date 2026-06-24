@@ -10,7 +10,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/sdk/package.json ./packages/sdk/
 COPY providers/github/package.json ./providers/github/
 COPY providers/coolify/package.json ./providers/coolify/
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build
 FROM deps AS builder
@@ -35,7 +35,7 @@ COPY packages/sdk/package.json ./packages/sdk/
 COPY providers/github/package.json ./providers/github/
 COPY providers/coolify/package.json ./providers/coolify/
 
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY apps/api/prisma ./apps/api/prisma

@@ -2140,11 +2140,11 @@ chore: upgrade prisma to 5.8
 **Goal:** Mendukung pendaftaran GitHub App secara dinamis langsung dari dashboard melalui **GitHub App Manifest Flow** (sehingga tidak memerlukan konfigurasi manual pada file `.env` server) dan mendukung integrasi **multi-akun/multi-organisasi GitHub** dalam satu instance.
 
 #### 📦 Arsitektur & Otorisasi
-- [ ] Implementasi backend Manifest payload generator & callback converter (`POST /conversions`) untuk mendaftarkan GitHub App secara dinamis
-- [ ] Penyimpanan kredensial App lengkap (App ID, Client ID, Client Secret, Private Key) langsung di database
-- [ ] Dukungan multi-akun & multi-organisasi melalui instalasi GitHub App publik
-- [ ] Generate Installation Access Token (IAT) menggunakan RSA JWT signing secara real-time untuk API calls
-- [ ] Desain UI dashboard untuk inisiasi Manifest Flow dan pengelolaan multi-instalasi akun aktif
+- [x] Implementasi backend Manifest payload generator & callback converter (`POST /conversions`) untuk mendaftarkan GitHub App secara dinamis
+- [x] Penyimpanan kredensial App lengkap (App ID, Client ID, Client Secret, Private Key) langsung di database
+- [x] Dukungan multi-akun & multi-organisasi melalui instalasi GitHub App publik
+- [x] Generate Installation Access Token (IAT) menggunakan RSA JWT signing secara real-time untuk API calls
+- [x] Desain UI dashboard untuk inisiasi Manifest Flow dan pengelolaan multi-instalasi akun aktif
 
 ---
 
@@ -2158,7 +2158,7 @@ chore: upgrade prisma to 5.8
 | v0.4 | Template Engine: Upload, Apply, Built-in templates | `[x] Completed` | ~25 tasks |
 | v1.0 | Community Release: Docker, Docs, Installer, Tests | `[x] Completed` | ~30 tasks |
 | v1.1 | Security & Integrations: GitHub OAuth, OAuth providers | `[x] Completed` | ~15 tasks |
-| v1.2 | Multi-Account App: GitHub App Manifest flow (No-env) | `[ ] Not Started` | ~15 tasks |
+| v1.2 | Multi-Account App: GitHub App Manifest flow (No-env) | `[x] Completed` | ~15 tasks |
 
 ---
 
