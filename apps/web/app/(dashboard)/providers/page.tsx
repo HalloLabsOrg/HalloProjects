@@ -23,11 +23,17 @@ export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [method, setMethod] = useState<'oauth' | 'pat'>('oauth');
   const [form, setForm] = useState({ name: '', token: '', owner: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['providers'],
     queryFn: providersApi.list,
+  });
+
+  const { data: oauthConfig } = useQuery({
+    queryKey: ['github-oauth-config'],
+    queryFn: providersApi.getGithubAuthorizeUrl,
   });
 
   const createMutation = useMutation({
@@ -62,6 +68,7 @@ export default function ProvidersPage() {
   });
 
   const providers = (data as any[]) ?? [];
+  const oauthAvailable = oauthConfig?.configured ?? false;
 
   return (
     <div>
@@ -75,43 +82,104 @@ export default function ProvidersPage() {
             <DialogHeader>
               <DialogTitle>Connect GitHub Provider</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label>Name</Label>
-                <Input
-                  placeholder="My GitHub"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Personal Access Token</Label>
-                <Input
-                  type="password"
-                  placeholder="github_pat_xxx"
-                  value={form.token}
-                  onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Organization (optional)</Label>
-                <Input
-                  placeholder="my-org"
-                  value={form.owner}
-                  onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}
-                />
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending || !form.name || !form.token}
+
+            <div className="flex border-b border-border my-2">
+              <button
+                type="button"
+                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
+                  method === 'oauth'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setMethod('oauth')}
               >
-                {createMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Connect
-              </Button>
+                GitHub OAuth
+              </button>
+              <button
+                type="button"
+                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
+                  method === 'pat'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setMethod('pat')}
+              >
+                Personal Access Token (PAT)
+              </button>
             </div>
+
+            {method === 'oauth' ? (
+              <div className="space-y-4 py-4">
+                {oauthAvailable ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground text-center">
+                      Connect your GitHub account seamlessly to import public and private
+                      repositories.
+                    </p>
+                    <Button
+                      className="w-full flex items-center justify-center gap-2"
+                      size="lg"
+                      onClick={() => {
+                        if (oauthConfig?.url) {
+                          window.location.href = oauthConfig.url;
+                        }
+                      }}
+                    >
+                      <Plug className="h-5 w-5" />
+                      Connect with GitHub
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 text-center">
+                    <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
+                      GitHub OAuth is not configured on this server. To enable one-click login, set
+                      up GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the server&apos;s .env file.
+                    </div>
+                    <Button className="w-full" variant="outline" onClick={() => setMethod('pat')}>
+                      Use Personal Access Token instead
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <Label>Name</Label>
+                  <Input
+                    placeholder="My GitHub"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Personal Access Token</Label>
+                  <Input
+                    type="password"
+                    placeholder="github_pat_xxx"
+                    value={form.token}
+                    onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Organization (optional)</Label>
+                  <Input
+                    placeholder="my-org"
+                    value={form.owner}
+                    onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => createMutation.mutate()}
+                  disabled={createMutation.isPending || !form.name || !form.token}
+                >
+                  {createMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Connect
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

@@ -30,6 +30,33 @@ Buka **Providers → Add Provider → GitHub**, isi:
 
 Klik **Test Connection** untuk verifikasi, lalu **Save**.
 
+## Setup Alternatif: GitHub OAuth (Login Satu-Klik)
+
+Jika Anda ingin mengizinkan pengguna menghubungkan akun GitHub hanya dengan menekan tombol satu-klik (OAuth) tanpa harus memasukkan Personal Access Token secara manual, ikuti langkah berikut:
+
+### 1. Register GitHub OAuth App
+
+1. Buka [GitHub Settings → Developer Settings → OAuth Apps](https://github.com/settings/developers).
+2. Klik **Register a new application**.
+3. Isi data aplikasi:
+   - **Application Name**: `HALLO Projects`
+   - **Homepage URL**: `http://localhost:3000` (atau domain server Anda)
+   - **Authorization callback URL**: `http://localhost:3000/providers/github/callback` (sesuaikan port & domain dengan aplikasi frontend Anda)
+4. Klik **Register application**.
+5. Salin **Client ID**, lalu klik **Generate a new client secret** untuk membuat secret key baru.
+
+### 2. Konfigurasi Environment Server
+
+Buka file `.env` pada server API/backend Anda, lalu tambahkan baris berikut:
+
+```env
+GITHUB_CLIENT_ID=salin_client_id_di_sini
+GITHUB_CLIENT_SECRET=salin_client_secret_di_sini
+GITHUB_REDIRECT_URI=http://localhost:3000/providers/github/callback
+```
+
+_Catatan: Restart aplikasi server untuk memuat konfigurasi baru. Tab koneksi OAuth akan otomatis aktif di dashboard setelah variabel ini terisi._
+
 ## Implementation
 
 ```typescript

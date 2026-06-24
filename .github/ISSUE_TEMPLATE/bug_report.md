@@ -4,7 +4,6 @@ about: Laporkan masalah atau kejanggalan sistem (bug) untuk membantu kami memper
 title: '[BUG] '
 labels: bug
 assignees: ''
-
 ---
 
 **Deskripsi Masalah**
@@ -12,6 +11,7 @@ Jelaskan secara singkat dan padat apa masalah yang terjadi.
 
 **Langkah untuk Mereproduksi**
 Langkah-langkah untuk mereproduksi perilaku tersebut:
+
 1. Masuk ke halaman '...'
 2. Klik tombol '...'
 3. Lihat pesan error '...'
@@ -23,6 +23,7 @@ Jelaskan secara jelas apa yang seharusnya terjadi jika sistem berfungsi dengan b
 Jika memungkinkan, lampirkan tangkapan layar dashboard atau salinan log error dari Docker container (`docker compose logs api`).
 
 **Informasi Lingkungan (Environment):**
+
 - OS: [e.g. Ubuntu 22.04 / MacOS]
 - Browser: [e.g. Chrome, Safari]
 - Versi HALLO Projects: [e.g. v1.0.0]

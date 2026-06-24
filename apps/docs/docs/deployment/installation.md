@@ -30,11 +30,12 @@ chmod +x install.sh
 ```
 
 Script ini akan otomatis:
-* Memeriksa dependensi sistem (`docker`, `git`, `curl`).
-* Meminta input `DOMAIN` dan kredensial Admin.
-* Membuat file `.env` dengan key enkripsi dan password database yang aman.
-* Menjalankan stack kontainer Docker.
-* Melakukan migrasi database dan seeding template awal.
+
+- Memeriksa dependensi sistem (`docker`, `git`, `curl`).
+- Meminta input `DOMAIN` dan kredensial Admin.
+- Membuat file `.env` dengan key enkripsi dan password database yang aman.
+- Menjalankan stack kontainer Docker.
+- Melakukan migrasi database dan seeding template awal.
 
 ---
 
@@ -85,4 +86,3 @@ Untuk memperbarui sistem ke versi rilis terbaru, Anda dapat menjalankan script u
 # Jalankan script update otomatis
 ./update.sh
 ```
-

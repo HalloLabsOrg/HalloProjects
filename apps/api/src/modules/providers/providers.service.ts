@@ -38,7 +38,7 @@ export class ProvidersService {
   }
 
   async createGithub(dto: CreateGithubProviderDto) {
-    const rawConfig: Record<string, string> = { token: dto.token };
+    const rawConfig: Record<string, string> = { token: dto.token, authMethod: 'pat' };
     if (dto.owner) rawConfig.owner = dto.owner;
     if (dto.webhookSecret) rawConfig.webhookSecret = dto.webhookSecret;
 
@@ -46,6 +46,30 @@ export class ProvidersService {
       data: {
         type: ProviderType.GITHUB,
         name: dto.name,
+        config: this.encryptConfig(rawConfig),
+        isActive: true,
+      },
+    });
+
+    // Auto-sync repositories which triggers webhook registration
+    this.repositoriesService.sync(connection.id).catch((err) => {
+      console.error(`Failed to auto-sync repositories for new provider ${connection.id}:`, err);
+    });
+
+    return this.maskSecrets(connection);
+  }
+
+  async createGithubOAuth(params: { name: string; token: string; owner: string }) {
+    const rawConfig: Record<string, string> = {
+      token: params.token,
+      authMethod: 'oauth',
+      owner: params.owner,
+    };
+
+    const connection = await this.prisma.providerConnection.create({
+      data: {
+        type: ProviderType.GITHUB,
+        name: params.name,
         config: this.encryptConfig(rawConfig),
         isActive: true,
       },

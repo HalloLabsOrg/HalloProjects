@@ -24,10 +24,10 @@ my-custom-template.zip
     └── .env
 ```
 
-* **`template.json`**: Berisi data metadata dasar template.
-* **`schema.json`**: Mendefinisikan form input variabel dinamis yang akan diisi oleh pengguna saat template diaplikasikan.
-* **`preview.png`**: Thumbnail/preview gambar template (opsional, disarankan rasio 16:9).
-* **`files/`**: Berisi file-file konfigurasi template sesungguhnya. Variabel-variabel template akan disubstitusikan di dalam folder ini.
+- **`template.json`**: Berisi data metadata dasar template.
+- **`schema.json`**: Mendefinisikan form input variabel dinamis yang akan diisi oleh pengguna saat template diaplikasikan.
+- **`preview.png`**: Thumbnail/preview gambar template (opsional, disarankan rasio 16:9).
+- **`files/`**: Berisi file-file konfigurasi template sesungguhnya. Variabel-variabel template akan disubstitusikan di dalam folder ini.
 
 ---
 
@@ -45,8 +45,8 @@ Metadata dasar untuk registrasi template:
 }
 ```
 
-* **`slug`**: Identifier unik template (hanya huruf kecil, angka, dan strip).
-* **`version`**: Versi template mengikuti standar SemVer.
+- **`slug`**: Identifier unik template (hanya huruf kecil, angka, dan strip).
+- **`version`**: Versi template mengikuti standar SemVer.
 
 ---
 
@@ -75,6 +75,7 @@ Skema JSON mendefinisikan field input form. Contoh skema yang meminta input vari
 ```
 
 ### Tipe Data Skema yang Didukung:
+
 1. `string`: Input teks standard.
 2. `number`: Input angka numerik.
 3. `boolean`: Checkbox toggle (Yes/No).
@@ -83,7 +84,7 @@ Skema JSON mendefinisikan field input form. Contoh skema yang meminta input vari
 
 ## 3. Substitusi Variabel pada Berkas di `files/`
 
-Di dalam folder `files/`, Anda dapat menyematkan variabel dinamis menggunakan sintaks penulisan `{{ KEY }}`. 
+Di dalam folder `files/`, Anda dapat menyematkan variabel dinamis menggunakan sintaks penulisan `{{ KEY }}`.
 
 Contoh berkas `files/docker-compose.yml`:
 
@@ -94,10 +95,10 @@ services:
   web:
     image: node:20-alpine
     ports:
-      - "{{ PORT }}:{{ PORT }}"
+      - '{{ PORT }}:{{ PORT }}'
     environment:
       - DATABASE_URL=postgresql://postgres:{{ DB_PASSWORD }}@db:5432/mydb
-      
+
   db:
     image: postgres:15-alpine
     environment:

@@ -4,7 +4,6 @@ about: Usulkan fitur baru atau ide peningkatan performa untuk sistem ini.
 title: '[FEAT] '
 labels: enhancement
 assignees: ''
-
 ---
 
 **Apakah permintaan fitur Anda terkait dengan suatu masalah? Silakan jelaskan.**
