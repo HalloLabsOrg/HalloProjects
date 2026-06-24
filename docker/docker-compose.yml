@@ -1,0 +1,120 @@
+name: HalloProjects
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: HalloProjects-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    networks:
+      - hallo_net
+
+  web:
+    image: hallolabs/hallo-projects-web:latest
+    container_name: HalloProjects-web
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: https://${DOMAIN}/api
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - hallo_net
+
+  api:
+    image: hallolabs/hallo-projects-api:latest
+    container_name: HalloProjects-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://hallo:${DB_PASSWORD}@postgres:5432/hallo_projects
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      PORT: 4000
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - hallo_net
+
+  worker:
+    image: hallolabs/hallo-projects-worker:latest
+    container_name: HalloProjects-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://hallo:${DB_PASSWORD}@postgres:5432/hallo_projects
+      REDIS_URL: redis://redis:6379
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      HEALTH_CHECK_INTERVAL: ${HEALTH_CHECK_INTERVAL:-60}
+      HEALTH_CHECK_TIMEOUT: ${HEALTH_CHECK_TIMEOUT:-10}
+      DEPLOYMENT_POLL_INTERVAL: ${DEPLOYMENT_POLL_INTERVAL:-5}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hallo_net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: HalloProjects-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hallo_projects
+      POSTGRES_USER: hallo
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hallo -d hallo_projects"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hallo_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: HalloProjects-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - hallo_net
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
+
+networks:
+  hallo_net:
+    driver: bridge

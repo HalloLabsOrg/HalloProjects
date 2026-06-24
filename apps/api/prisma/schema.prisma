@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  DEVELOPER
+  VIEWER
+}
+
+enum ProviderType {
+  GITHUB
+  COOLIFY
+}
+
+enum DeploymentStatus {
+  PENDING
+  BUILDING
+  DEPLOYING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum MonitoringStatus {
+  ONLINE
+  OFFLINE
+  SLOW
+  UNKNOWN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum AuditAction {
+  USER_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_UPDATED
+  USER_DISABLED
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_ARCHIVED
+  SERVICE_CREATED
+  SERVICE_UPDATED
+  SERVICE_DELETED
+  DEPLOYMENT_TRIGGERED
+  DEPLOYMENT_CANCELLED
+  ENVIRONMENT_CREATED
+  ENVIRONMENT_UPDATED
+  ENVIRONMENT_DELETED
+  VARIABLE_CREATED
+  VARIABLE_UPDATED
+  VARIABLE_DELETED
+  PROVIDER_CONNECTED
+  PROVIDER_DISCONNECTED
+  TEMPLATE_UPLOADED
+  TEMPLATE_APPLIED
+  REPOSITORY_SYNCED
+}
+
+// ─── Core Entities ───────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         Role     @default(DEVELOPER)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  auditLogs AuditLog[]
+  projects  Project[]  @relation("ProjectCreator")
+
+  @@map("users")
+}
+
+model ProviderConnection {
+  id           String    @id @default(cuid())
+  name         String
+  type         ProviderType
+  config       Json
+  isActive     Boolean   @default(true) @map("is_active")
+  lastTestedAt DateTime? @map("last_tested_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  repositories Repository[]
+  deployments  Deployment[]
+
+  @@map("provider_connections")
+}
+
+model Repository {
+  id            String    @id @default(cuid())
+  providerId    String    @map("provider_id")
+  externalId    String    @map("external_id")
+  name          String
+  fullName      String    @map("full_name")
+  url           String
+  defaultBranch String    @map("default_branch")
+  visibility    String
+  lastCommitSha String?   @map("last_commit_sha")
+  lastCommitMsg String?   @map("last_commit_msg")
+  lastCommitAt  DateTime? @map("last_commit_at")
+  syncedAt      DateTime? @map("synced_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  provider ProviderConnection @relation(fields: [providerId], references: [id])
+  services Service[]
+
+  @@unique([providerId, externalId])
+  @@map("repositories")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  createdById String        @map("created_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  createdBy    User          @relation("ProjectCreator", fields: [createdById], references: [id])
+  services     Service[]
+  environments Environment[]
+
+  @@map("projects")
+}
+
+model Service {
+  id           String   @id @default(cuid())
+  projectId    String   @map("project_id")
+  repositoryId String   @map("repository_id")
+  name         String
+  slug         String
+  branch       String   @default("main")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repository Repository         @relation(fields: [repositoryId], references: [id])
+  deployments Deployment[]
+  monitoring  MonitoringResult[]
+
+  @@unique([projectId, slug])
+  @@map("services")
+}
+
+model Environment {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  name      String
+  slug      String
+  branch    String?
+  domain    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project     Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  variables   EnvironmentVariable[]
+  deployments Deployment[]
+
+  @@unique([projectId, slug])
+  @@map("environments")
+}
+
+model EnvironmentVariable {
+  id            String   @id @default(cuid())
+  environmentId String   @map("environment_id")
+  key           String
+  value         String
+  isSecret      Boolean  @default(false) @map("is_secret")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, key])
+  @@map("environment_variables")
+}
+
+model Deployment {
+  id            String           @id @default(cuid())
+  serviceId     String           @map("service_id")
+  environmentId String           @map("environment_id")
+  providerId    String           @map("provider_id")
+  externalId    String?          @map("external_id")
+  status        DeploymentStatus @default(PENDING)
+  branch        String
+  commitSha     String?          @map("commit_sha")
+  commitMsg     String?          @map("commit_msg")
+  triggeredBy   String           @map("triggered_by")
+  startedAt     DateTime?        @map("started_at")
+  completedAt   DateTime?        @map("completed_at")
+  logs          String?          @db.Text
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  service     Service            @relation(fields: [serviceId], references: [id])
+  environment Environment        @relation(fields: [environmentId], references: [id])
+  provider    ProviderConnection @relation(fields: [providerId], references: [id])
+
+  @@map("deployments")
+}
+
+model MonitoringResult {
+  id            String           @id @default(cuid())
+  serviceId     String           @map("service_id")
+  environmentId String?          @map("environment_id")
+  url           String
+  status        MonitoringStatus
+  statusCode    Int?             @map("status_code")
+  responseTime  Int?             @map("response_time")
+  checkedAt     DateTime         @default(now()) @map("checked_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@index([serviceId, checkedAt])
+  @@map("monitoring_results")
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String?     @map("user_id")
+  action     AuditAction
+  entityType String?     @map("entity_type")
+  entityId   String?     @map("entity_id")
+  metadata   Json?
+  ipAddress  String?     @map("ip_address")
+  userAgent  String?     @map("user_agent")
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  version     String
+  author      String?
+  isActive    Boolean  @default(true) @map("is_active")
+  schema      Json
+  files       Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("templates")
+}

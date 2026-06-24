@@ -1,0 +1,20 @@
+{
+  "name": "@hallo/github-provider",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hallo/sdk": "workspace:*",
+    "@octokit/rest": "^20.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "providers/*"
+
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "bcrypt"
+  - "prisma"
+  - "msgpackr-extract"
+  - "unrs-resolver"
+  - "@swc/core"

@@ -1,0 +1,65 @@
+/**
+ * HALLO Projects - Custom Docusaurus Theme
+ */
+
+:root {
+  --ifm-color-primary: #6366f1;
+  --ifm-color-primary-dark: #4f52ef;
+  --ifm-color-primary-darker: #4346ee;
+  --ifm-color-primary-darkest: #2326e8;
+  --ifm-color-primary-light: #777af3;
+  --ifm-color-primary-lighter: #8386f4;
+  --ifm-color-primary-lightest: #a5a7f8;
+  --ifm-code-font-size: 93%;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --docusaurus-highlighted-code-line-bg: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #818cf8;
+  --ifm-color-primary-dark: #6c77f6;
+  --ifm-color-primary-darker: #6270f5;
+  --ifm-color-primary-darkest: #3a52f2;
+  --ifm-color-primary-light: #96a1fa;
+  --ifm-color-primary-lighter: #a0abfb;
+  --ifm-color-primary-lightest: #bfc5fd;
+  --ifm-background-color: #0f0f17;
+  --ifm-navbar-background-color: #13131e;
+  --ifm-sidebar-background: #13131e;
+  --docusaurus-highlighted-code-line-bg: rgba(129, 140, 248, 0.15);
+}
+
+/* Navbar */
+.navbar {
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* Sidebar */
+.menu__link--active {
+  font-weight: 600;
+}
+
+/* Code blocks */
+.prism-code {
+  border-radius: 8px;
+}
+
+/* Admonitions */
+.alert {
+  border-radius: 8px;
+}
+
+/* Tables */
+table {
+  display: table;
+  width: 100%;
+}
+
+th {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+/* Hero section on landing page */
+.hero--primary {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+}

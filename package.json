@@ -1,0 +1,40 @@
+{
+  "name": "hallo-projects",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HALLO Projects — Open-source Project Control Plane",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "providers/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.24.0",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "18.3.31",
+      "@types/react-dom": "18.3.7"
+    }
+  }
+}

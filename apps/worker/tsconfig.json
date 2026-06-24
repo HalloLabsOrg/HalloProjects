@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../..",
+    "paths": {
+      "@hallo/shared": ["../../packages/shared/src/index.ts"],
+      "@hallo/sdk": ["../../packages/sdk/src/index.ts"],
+      "@hallo/github-provider": ["../../providers/github/src/index.ts"],
+      "@hallo/coolify-provider": ["../../providers/coolify/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}
