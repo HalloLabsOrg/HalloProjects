@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
+  "ui": "stream",
   "concurrency": "16",
   "tasks": {
     "build": {
@@ -18,7 +18,8 @@
       "outputs": ["coverage/**"]
     },
     "lint": {
-      "inputs": ["$TURBO_DEFAULT$"]
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
     },
     "typecheck": {
       "dependsOn": ["^build"],

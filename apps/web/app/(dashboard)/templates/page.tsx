@@ -26,6 +26,7 @@ import {
   FolderOpen,
   ArrowRight,
   ArrowLeft,
+  Download,
 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/empty-state';
 
@@ -142,6 +143,26 @@ export default function TemplatesPage() {
         description: err?.response?.data?.message || 'Failed to apply configuration',
         variant: 'destructive',
       });
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: ({ id, slug, version }: { id: string; slug: string; version: string }) =>
+      templatesApi.export(id).then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${slug}-v${version}.zip`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }),
+    onSuccess: () => {
+      toast({ title: 'Template exported successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to export template', variant: 'destructive' });
     },
   });
 
@@ -323,30 +344,51 @@ export default function TemplatesPage() {
                       >
                         {template.isActive ? 'Disable' : 'Enable'}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => {
-                          if (confirm('Delete this template?')) deleteMutation.mutate(template.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {template.author !== 'Hallo Labs' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            if (confirm('Delete this template?'))
+                              deleteMutation.mutate(template.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div />
                   )}
 
-                  <Button
-                    size="sm"
-                    className="shadow-sm"
-                    disabled={!template.isActive}
-                    onClick={() => handleStartApply(template)}
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1.5" />
-                    Apply
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shadow-sm"
+                      onClick={() =>
+                        exportMutation.mutate({
+                          id: template.id,
+                          slug: template.slug,
+                          version: template.version,
+                        })
+                      }
+                      disabled={exportMutation.isPending}
+                    >
+                      <Download className="h-3.5 w-3.5 mr-1.5" />
+                      Export
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="shadow-sm"
+                      disabled={!template.isActive}
+                      onClick={() => handleStartApply(template)}
+                    >
+                      <Play className="h-3.5 w-3.5 mr-1.5" />
+                      Apply
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

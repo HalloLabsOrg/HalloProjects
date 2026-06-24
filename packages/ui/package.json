@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint --cache --no-error-on-unmatched-pattern \"src/**/*.ts\""
   },
   "peerDependencies": {
     "react": ">=18.0.0",

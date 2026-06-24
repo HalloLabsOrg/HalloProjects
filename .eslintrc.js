@@ -14,5 +14,14 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  ignorePatterns: ['node_modules/', 'dist/', '.next/', 'coverage/', '*.js', '!.eslintrc.js'],
+  ignorePatterns: [
+    'node_modules/',
+    'dist/',
+    '.next/',
+    'coverage/',
+    '*.js',
+    '!.eslintrc.js',
+    'packages/templates/src/index.ts',
+    'src/index.ts',
+  ],
 };

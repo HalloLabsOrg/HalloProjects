@@ -120,7 +120,10 @@ export class TemplatesService {
   }
 
   async delete(id: string) {
-    await this.findOne(id);
+    const template = await this.findOne(id);
+    if (template.author === 'Hallo Labs') {
+      throw new BadRequestException('Built-in templates cannot be deleted');
+    }
     return this.prisma.template.delete({
       where: { id },
     });
@@ -197,6 +200,38 @@ export class TemplatesService {
       success: true,
       files: renderedFiles,
     };
+  }
+
+  async export(id: string): Promise<Buffer> {
+    const template = await this.findOne(id);
+    const zip = new AdmZip();
+
+    // 1. Add template.json
+    const templateJson = {
+      name: template.name,
+      slug: template.slug,
+      version: template.version,
+      description: template.description,
+      author: template.author,
+    };
+    zip.addFile('template.json', Buffer.from(JSON.stringify(templateJson, null, 2), 'utf8'));
+
+    // 2. Add schema.json
+    zip.addFile('schema.json', Buffer.from(JSON.stringify(template.schema, null, 2), 'utf8'));
+
+    // 3. Add files/ folder contents
+    const files = template.files as Record<string, string>;
+    for (const [path, content] of Object.entries(files)) {
+      zip.addFile(`files/${path}`, Buffer.from(content, 'utf8'));
+    }
+
+    // 4. Add preview.png if present
+    if (template.previewImage && template.previewImage.startsWith('data:image/png;base64,')) {
+      const base64Data = template.previewImage.substring('data:image/png;base64,'.length);
+      zip.addFile('preview.png', Buffer.from(base64Data, 'base64'));
+    }
+
+    return zip.toBuffer();
   }
 
   private renderTemplate(

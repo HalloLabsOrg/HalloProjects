@@ -218,4 +218,8 @@ export const templatesApi = {
         values,
       })
       .then((r) => r.data),
+  export: (id: string) =>
+    apiClient
+      .get<Blob>(`/api/templates/${id}/export`, { responseType: 'blob' })
+      .then((r) => r.data),
 };

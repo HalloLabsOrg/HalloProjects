@@ -10,6 +10,8 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Header,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
@@ -83,5 +85,18 @@ export class TemplatesController {
       throw new BadRequestException('projectId, environmentId, and values properties are required');
     }
     return this.templatesService.apply(id, body.projectId, body.environmentId, body.values);
+  }
+
+  @Get(':id/export')
+  @Header('Content-Type', 'application/zip')
+  @ApiOperation({ summary: 'Export/Download template as ZIP' })
+  async export(@Param('id') id: string, @Res() res: any) {
+    const template = await this.templatesService.findOne(id);
+    const zipBuffer = await this.templatesService.export(id);
+    res.set({
+      'Content-Disposition': `attachment; filename="${template.slug}-v${template.version}.zip"`,
+      'Content-Length': zipBuffer.length,
+    });
+    res.end(zipBuffer);
   }
 }

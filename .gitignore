@@ -41,3 +41,7 @@ pnpm-debug.log*
 HALLO_Projects_Technical_Documentation.docx
 HALLO_Projects_Technical_Documentation.pdf
 TECHNICAL_DOCUMENTATION.md
+
+# ESLint Cache
+.eslintcache
+
