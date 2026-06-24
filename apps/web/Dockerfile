@@ -19,6 +19,7 @@ COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY packages/sdk ./packages/sdk
 COPY apps/web ./apps/web
+ENV DOCKER_BUILD=1
 RUN pnpm --filter @hallo/web run build
 
 # Runner
