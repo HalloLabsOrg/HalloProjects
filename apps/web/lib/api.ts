@@ -118,7 +118,17 @@ export const environmentsApi = {
 
 // Deployments
 export const deploymentsApi = {
-  list: (params?: { page?: number; limit?: number; status?: string; serviceId?: string }) =>
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    serviceId?: string;
+    environmentId?: string;
+    projectId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) =>
     apiClient
       .get<{ data: unknown[]; meta: unknown }>('/api/deployments', { params })
       .then((r) => r.data),

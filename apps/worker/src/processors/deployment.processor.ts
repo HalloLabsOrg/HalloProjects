@@ -81,9 +81,14 @@ export class DeploymentProcessor {
         });
 
         if (status === 'SUCCESS' || status === 'FAILED' || status === 'CANCELLED') {
+          const completedAt = new Date();
+          const duration = current?.startedAt
+            ? Math.round((completedAt.getTime() - current.startedAt.getTime()) / 1000)
+            : null;
+
           await this.prisma.deployment.update({
             where: { id: deploymentId },
-            data: { completedAt: new Date() },
+            data: { completedAt, duration },
           });
           this.logger.log(`Deployment ${deploymentId} finished with status ${status}`);
           return;
@@ -101,12 +106,23 @@ export class DeploymentProcessor {
   }
 
   private async updateStatus(deploymentId: string, status: DeploymentStatus, logs?: string) {
+    const deployment = await this.prisma.deployment.findUnique({ where: { id: deploymentId } });
+    const completedAt =
+      status === DeploymentStatus.FAILED || status === DeploymentStatus.SUCCESS || status === DeploymentStatus.CANCELLED
+        ? new Date()
+        : null;
+
+    const duration =
+      completedAt && deployment?.startedAt
+        ? Math.round((completedAt.getTime() - deployment.startedAt.getTime()) / 1000)
+        : null;
+
     await this.prisma.deployment.update({
       where: { id: deploymentId },
       data: {
         status,
         ...(logs ? { logs } : {}),
-        ...(status === DeploymentStatus.FAILED ? { completedAt: new Date() } : {}),
+        ...(completedAt ? { completedAt, duration } : {}),
       },
     });
   }

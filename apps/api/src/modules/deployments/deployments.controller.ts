@@ -22,14 +22,29 @@ export class DeploymentsController {
   @ApiOperation({ summary: 'List all deployments' })
   @ApiQuery({ name: 'status', required: false, enum: DeploymentStatus })
   @ApiQuery({ name: 'serviceId', required: false })
+  @ApiQuery({ name: 'environmentId', required: false })
+  @ApiQuery({ name: 'projectId', required: false })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   findAll(
     @Query(ParsePaginationPipe) pagination: any,
     @Query('status') status?: DeploymentStatus,
     @Query('serviceId') serviceId?: string,
+    @Query('environmentId') environmentId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.deploymentsService.findAll(pagination, { status, serviceId });
+    return this.deploymentsService.findAll(pagination, {
+      status,
+      serviceId,
+      environmentId,
+      projectId,
+      startDate,
+      endDate,
+    });
   }
 
   @Get('services/:serviceId/deployments')

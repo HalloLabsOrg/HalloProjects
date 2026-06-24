@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../../common/encryption/encryption.service';
 import { ProviderFactory } from './provider.factory';
 import { CreateGithubProviderDto, CreateCoolifyProviderDto } from './dto/create-provider.dto';
 import { ProviderType } from '@prisma/client';
+import { RepositoriesService } from '../repositories/repositories.service';
 
 const SECRET_FIELDS = ['token', 'apiToken', 'webhookSecret'];
 
@@ -13,6 +14,8 @@ export class ProvidersService {
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
     private readonly factory: ProviderFactory,
+    @Inject(forwardRef(() => RepositoriesService))
+    private readonly repositoriesService: RepositoriesService,
   ) {}
 
   async findAll() {
@@ -40,6 +43,11 @@ export class ProvidersService {
         config: this.encryptConfig(rawConfig),
         isActive: true,
       },
+    });
+
+    // Auto-sync repositories which triggers webhook registration
+    this.repositoriesService.sync(connection.id).catch((err) => {
+      console.error(`Failed to auto-sync repositories for new provider ${connection.id}:`, err);
     });
 
     return this.maskSecrets(connection);

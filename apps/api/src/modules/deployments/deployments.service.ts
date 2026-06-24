@@ -25,12 +25,44 @@ export class DeploymentsService {
 
   async findAll(
     pagination: { page: number; limit: number; search?: string },
-    filters?: { status?: DeploymentStatus; serviceId?: string },
+    filters?: {
+      status?: DeploymentStatus;
+      serviceId?: string;
+      environmentId?: string;
+      startDate?: string;
+      endDate?: string;
+      projectId?: string;
+    },
   ) {
-    const where: Record<string, unknown> = {};
+    const where: any = {};
 
     if (filters?.status) where.status = filters.status;
     if (filters?.serviceId) where.serviceId = filters.serviceId;
+    if (filters?.environmentId) where.environmentId = filters.environmentId;
+
+    if (filters?.projectId) {
+      where.service = { projectId: filters.projectId };
+    }
+
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {};
+      if (filters.startDate) {
+        where.createdAt.gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        where.createdAt.lte = new Date(filters.endDate);
+      }
+    }
+
+    if (pagination.search) {
+      where.OR = [
+        { branch: { contains: pagination.search, mode: 'insensitive' } },
+        { commitMsg: { contains: pagination.search, mode: 'insensitive' } },
+        { commitSha: { contains: pagination.search, mode: 'insensitive' } },
+        { triggeredBy: { contains: pagination.search, mode: 'insensitive' } },
+        { service: { name: { contains: pagination.search, mode: 'insensitive' } } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.deployment.findMany({
@@ -38,7 +70,7 @@ export class DeploymentsService {
         ...paginateArgs(pagination),
         orderBy: { createdAt: 'desc' },
         include: {
-          service: { select: { id: true, name: true } },
+          service: { select: { id: true, name: true, projectId: true } },
           environment: { select: { id: true, name: true } },
         },
       }),
@@ -130,9 +162,18 @@ export class DeploymentsService {
       }
     }
 
+    const completedAt = new Date();
+    const duration = deployment.startedAt
+      ? Math.round((completedAt.getTime() - deployment.startedAt.getTime()) / 1000)
+      : null;
+
     return this.prisma.deployment.update({
       where: { id },
-      data: { status: DeploymentStatus.CANCELLED, completedAt: new Date() },
+      data: {
+        status: DeploymentStatus.CANCELLED,
+        completedAt,
+        duration,
+      },
     });
   }
 

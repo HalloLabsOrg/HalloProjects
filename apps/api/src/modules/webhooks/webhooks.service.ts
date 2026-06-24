@@ -13,13 +13,32 @@ export class WebhooksService {
     @InjectQueue(QUEUE_NAMES.WEBHOOKS) private readonly webhooksQueue: Queue,
   ) {}
 
-  async processGithubWebhook(event: string, signature: string, rawBody: Buffer, body: any) {
+  async processGithubWebhook(
+    event: string,
+    signature: string,
+    rawBody: Buffer,
+    body: any,
+    deliveryId?: string,
+  ) {
     if (event === 'ping') {
       return { ok: true };
     }
 
     if (event !== 'push') {
       return { ignored: true };
+    }
+
+    if (deliveryId) {
+      const existing = await this.prisma.processedWebhook.findUnique({
+        where: { id: deliveryId },
+      });
+      if (existing) {
+        return { ok: true, message: 'Webhook already processed (duplicate)' };
+      }
+
+      await this.prisma.processedWebhook.create({
+        data: { id: deliveryId },
+      });
     }
 
     const repoFullName = body.repository?.full_name;

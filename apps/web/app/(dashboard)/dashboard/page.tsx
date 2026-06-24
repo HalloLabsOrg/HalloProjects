@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { deploymentsApi, projectsApi, monitoringApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: projectsData, isLoading: loadingProjects } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsApi.list({ limit: 1 }),
@@ -114,24 +116,57 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">No deployments yet.</p>
       ) : (
         <div className="space-y-2">
-          {deployments.map((d: any) => (
-            <div
-              key={d.id}
-              className="flex items-center justify-between rounded-md border px-4 py-3"
-            >
-              <div>
-                <p className="text-sm font-medium">{d.service?.name ?? d.serviceId}</p>
-                <p className="text-xs text-muted-foreground">
-                  {d.branch} · {d.environment?.name}
-                </p>
+          {deployments.map((d: any) => {
+            const durationStr = formatDuration(d.duration);
+            return (
+              <div
+                key={d.id}
+                className="flex items-center justify-between rounded-md border px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => router.push(`/deployments/${d.id}`)}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-foreground">
+                      {d.service?.name ?? d.serviceId}
+                    </p>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                      {d.branch}
+                    </span>
+                    <Badge variant="outline" className="text-xs">
+                      {d.environment?.name ?? '—'}
+                    </Badge>
+                  </div>
+                  {d.commitSha && (
+                    <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5 flex-wrap">
+                      <span className="text-primary font-semibold">{d.commitSha.slice(0, 7)}</span>
+                      {d.commitMsg && (
+                        <span className="truncate max-w-[250px] italic">({d.commitMsg})</span>
+                      )}
+                    </p>
+                  )}
+                  {durationStr && (
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Completed in{' '}
+                      <span className="font-semibold text-foreground">{durationStr}</span>
+                    </p>
+                  )}
+                </div>
+                <DeploymentBadge status={d.status} />
               </div>
-              <DeploymentBadge status={d.status} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
+}
+
+function formatDuration(seconds: number | null | undefined) {
+  if (seconds === null || seconds === undefined) return '';
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
 }
 
 function DeploymentBadge({ status }: { status: string }) {

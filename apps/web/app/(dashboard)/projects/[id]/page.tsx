@@ -31,10 +31,43 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Layers, Plus, Rocket } from 'lucide-react';
+import {
+  Layers,
+  Plus,
+  Rocket,
+  Clock,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Ban,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Search,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type Tab = 'overview' | 'services' | 'deployments' | 'environments' | 'variables';
+
+const STATUSES = ['ALL', 'PENDING', 'BUILDING', 'DEPLOYING', 'SUCCESS', 'FAILED', 'CANCELLED'];
+
+const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  SUCCESS: 'default',
+  FAILED: 'destructive',
+  CANCELLED: 'outline',
+  PENDING: 'secondary',
+  BUILDING: 'secondary',
+  DEPLOYING: 'secondary',
+};
+
+function formatDuration(seconds: number | null | undefined) {
+  if (seconds === null || seconds === undefined) return '—';
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+}
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -55,11 +88,56 @@ export default function ProjectDetailPage() {
     enabled: tab === 'services' || tab === 'overview',
   });
 
-  const { data: deploymentsData } = useQuery({
-    queryKey: ['deployments', 'project', id],
-    queryFn: () => deploymentsApi.list({ limit: 20 }),
+  const [deployPage, setDeployPage] = useState(1);
+  const [deployStatus, setDeployStatus] = useState('ALL');
+  const [deployEnv, setDeployEnv] = useState('ALL');
+  const [deploySearch, setDeploySearch] = useState('');
+  const [deployStart, setDeployStart] = useState('');
+  const [deployEnd, setDeployEnd] = useState('');
+
+  const { data: deploymentsData, isLoading: loadingDeployments } = useQuery({
+    queryKey: [
+      'deployments',
+      'project',
+      id,
+      deployPage,
+      deployStatus,
+      deployEnv,
+      deploySearch,
+      deployStart,
+      deployEnd,
+    ],
+    queryFn: () =>
+      deploymentsApi.list({
+        projectId: id,
+        page: deployPage,
+        limit: 20,
+        status: deployStatus === 'ALL' ? undefined : deployStatus,
+        environmentId: deployEnv === 'ALL' ? undefined : deployEnv,
+        search: deploySearch || undefined,
+        startDate: deployStart || undefined,
+        endDate: deployEnd || undefined,
+      }),
     enabled: tab === 'deployments',
   });
+
+  const cancelDeploymentMutation = useMutation({
+    mutationFn: (depId: string) => deploymentsApi.cancel(depId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deployments', 'project', id] });
+      toast({ title: 'Deployment cancelled successfully' });
+    },
+    onError: () => toast({ title: 'Failed to cancel deployment', variant: 'destructive' }),
+  });
+
+  const handleResetDeployFilters = () => {
+    setDeployStatus('ALL');
+    setDeployEnv('ALL');
+    setDeploySearch('');
+    setDeployStart('');
+    setDeployEnd('');
+    setDeployPage(1);
+  };
 
   const { data: reposData } = useQuery({
     queryKey: ['repositories'],
@@ -81,6 +159,12 @@ export default function ProjectDetailPage() {
   const proj = project as any;
   const svcList = (services as any[]) ?? [];
   const deployments = (deploymentsData as any)?.data ?? [];
+  const deployMeta = (deploymentsData as any)?.meta ?? {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+  };
   const repos = (reposData as any)?.data ?? [];
 
   if (isLoading) {
@@ -250,28 +334,257 @@ export default function ProjectDetailPage() {
       )}
 
       {tab === 'deployments' && (
-        <div className="space-y-2">
-          {deployments.length === 0 ? (
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="flex flex-wrap gap-3 items-center bg-card p-4 rounded-lg border shadow-sm">
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search commit, branch..."
+                value={deploySearch}
+                onChange={(e) => {
+                  setDeploySearch(e.target.value);
+                  setDeployPage(1);
+                }}
+                className="pl-9 w-full text-sm"
+              />
+            </div>
+
+            <div className="w-40">
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                value={deployStatus}
+                onChange={(e) => {
+                  setDeployStatus(e.target.value);
+                  setDeployPage(1);
+                }}
+              >
+                <option value="ALL">All Statuses</option>
+                {STATUSES.filter((s) => s !== 'ALL').map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="w-44">
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                value={deployEnv}
+                onChange={(e) => {
+                  setDeployEnv(e.target.value);
+                  setDeployPage(1);
+                }}
+              >
+                <option value="ALL">All Environments</option>
+                {(proj?.environments ?? []).map((env: any) => (
+                  <option key={env.id} value={env.id}>
+                    {env.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                value={deployStart}
+                onChange={(e) => {
+                  setDeployStart(e.target.value);
+                  setDeployPage(1);
+                }}
+                className="w-36 text-sm"
+              />
+              <span className="text-muted-foreground text-sm">to</span>
+              <Input
+                type="date"
+                value={deployEnd}
+                onChange={(e) => {
+                  setDeployEnd(e.target.value);
+                  setDeployPage(1);
+                }}
+                className="w-36 text-sm"
+              />
+            </div>
+
+            {(deployStatus !== 'ALL' ||
+              deployEnv !== 'ALL' ||
+              deploySearch ||
+              deployStart ||
+              deployEnd) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetDeployFilters}
+                className="h-9 gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset
+              </Button>
+            )}
+          </div>
+
+          {loadingDeployments ? (
+            <p className="text-sm text-muted-foreground">Loading deployments...</p>
+          ) : deployments.length === 0 ? (
             <EmptyState
               icon={Rocket}
               title="No deployments"
-              description="Trigger a deployment from a service."
+              description={
+                deployStatus !== 'ALL' ||
+                deployEnv !== 'ALL' ||
+                deploySearch ||
+                deployStart ||
+                deployEnd
+                  ? 'No deployments match your active filters.'
+                  : 'Trigger a deployment from a service.'
+              }
+              action={
+                deployStatus !== 'ALL' ||
+                deployEnv !== 'ALL' ||
+                deploySearch ||
+                deployStart ||
+                deployEnd
+                  ? { label: 'Clear Filters', onClick: handleResetDeployFilters }
+                  : undefined
+              }
             />
           ) : (
-            deployments.map((d: any) => (
-              <div
-                key={d.id}
-                className="flex items-center justify-between rounded-md border px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium">{d.service?.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {d.branch} · {d.environment?.name}
-                  </p>
-                </div>
-                <Badge>{d.status}</Badge>
+            <div className="space-y-6">
+              {/* Timeline Container */}
+              <div className="relative pl-6 border-l border-muted space-y-8 py-2">
+                {deployments.map((d: any) => {
+                  const isCancellable = ['PENDING', 'BUILDING', 'DEPLOYING'].includes(d.status);
+
+                  return (
+                    <div key={d.id} className="relative group">
+                      {/* Timeline Node Icon */}
+                      <div className="absolute -left-[35px] top-1.5 bg-background p-1.5 border rounded-full shadow-sm">
+                        {d.status === 'SUCCESS' && (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        )}
+                        {d.status === 'FAILED' && <XCircle className="h-4 w-4 text-rose-500" />}
+                        {d.status === 'CANCELLED' && (
+                          <Ban className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        {d.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
+                        {['BUILDING', 'DEPLOYING'].includes(d.status) && (
+                          <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                        )}
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="bg-card border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex items-start justify-between gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-foreground">
+                              {d.service?.name}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {d.environment?.name}
+                            </Badge>
+                            <Badge
+                              variant={STATUS_VARIANTS[d.status] ?? 'outline'}
+                              className="text-xs font-semibold"
+                            >
+                              {d.status}
+                            </Badge>
+                          </div>
+
+                          <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap font-mono">
+                            <code className="bg-muted px-1.5 py-0.5 rounded text-primary">
+                              {d.branch}
+                            </code>
+                            {d.commitSha && (
+                              <>
+                                <span>·</span>
+                                <span className="font-semibold">{d.commitSha.slice(0, 7)}</span>
+                              </>
+                            )}
+                          </div>
+
+                          {d.commitMsg && (
+                            <p className="text-sm text-muted-foreground font-medium bg-muted/30 px-3 py-1.5 rounded-md italic">
+                              &ldquo;{d.commitMsg}&rdquo;
+                            </p>
+                          )}
+
+                          <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                            <span>
+                              Triggered by{' '}
+                              <span className="font-semibold text-foreground">{d.triggeredBy}</span>
+                            </span>
+                            <span>•</span>
+                            <span>{new Date(d.createdAt).toLocaleString()}</span>
+                            {d.duration !== undefined && d.duration !== null && (
+                              <>
+                                <span>•</span>
+                                <span className="font-semibold text-foreground">
+                                  Completed in {formatDuration(d.duration)}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {isCancellable && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => cancelDeploymentMutation.mutate(d.id)}
+                            disabled={cancelDeploymentMutation.isPending}
+                            className="h-8 text-xs gap-1"
+                          >
+                            <Ban className="h-3 w-3" />
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-between px-4 py-3 border rounded-lg bg-muted/20 shadow-sm">
+                <p className="text-sm text-muted-foreground">
+                  Showing{' '}
+                  <span className="font-semibold text-foreground">
+                    {deployMeta.total === 0 ? 0 : (deployMeta.page - 1) * deployMeta.limit + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-semibold text-foreground">
+                    {Math.min(deployMeta.page * deployMeta.limit, deployMeta.total)}
+                  </span>{' '}
+                  of <span className="font-semibold text-foreground">{deployMeta.total}</span>{' '}
+                  deployments
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeployPage((p) => Math.max(1, p - 1))}
+                    disabled={deployMeta.page <= 1}
+                    className="h-8 gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeployPage((p) => Math.min(deployMeta.totalPages, p + 1))}
+                    disabled={deployMeta.page >= deployMeta.totalPages}
+                    className="h-8 gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}

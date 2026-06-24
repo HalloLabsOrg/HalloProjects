@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProviderFactory } from '../providers/provider.factory';
 import { paginateResponse, paginateArgs } from '../../common/helpers/paginate.helper';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 @Injectable()
 export class RepositoriesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly providerFactory: ProviderFactory,
+    private readonly encryption: EncryptionService,
   ) {}
 
   async findAll(pagination: { page: number; limit: number; search?: string }) {
@@ -46,6 +48,18 @@ export class RepositoriesService {
     const repo = await this.findOne(id);
     const provider = await this.providerFactory.getRepositoryProvider(repo.providerId);
     return provider.getBranches(repo.externalId);
+  }
+
+  private decryptConfig(config: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(config)) {
+      try {
+        result[key] = this.encryption.decrypt(value);
+      } catch {
+        result[key] = value;
+      }
+    }
+    return result;
   }
 
   async sync(providerId?: string) {
@@ -90,6 +104,27 @@ export class RepositoriesService {
               },
             });
             synced++;
+
+            // Register webhook to GitHub automatically
+            const domain = process.env.DOMAIN || 'localhost:4000';
+            const webhookUrl = domain.startsWith('http')
+              ? `${domain}/api/webhooks/github`
+              : `https://${domain}/api/webhooks/github`;
+
+            const decryptedConfig = this.decryptConfig(connection.config as Record<string, string>);
+            const webhookSecret = decryptedConfig.webhookSecret || process.env.GITHUB_WEBHOOK_SECRET || 'hallo-webhook-secret';
+
+            await githubProvider.registerWebhook(repo.externalId, {
+              url: webhookUrl,
+              secret: webhookSecret,
+              events: ['push', 'pull_request'],
+            }).catch((err: Error) => {
+              // Ignore already exists error, otherwise log in results
+              if (!err.message?.includes('already exists')) {
+                errors.push(`Webhook registration failed for ${repo.fullName}: ${err.message}`);
+              }
+            });
+
           } catch (err: unknown) {
             errors.push(
               `${repo.fullName}: ${err instanceof Error ? err.message : 'unknown error'}`,

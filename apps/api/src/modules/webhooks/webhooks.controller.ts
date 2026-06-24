@@ -12,6 +12,7 @@ export class WebhooksController {
   async handleGithub(
     @Headers('x-github-signature-256') signature?: string,
     @Headers('x-github-event') event?: string,
+    @Headers('x-github-delivery') deliveryId?: string,
     @Req() req?: Request & { rawBody?: Buffer },
   ) {
     if (!signature) {
@@ -24,6 +25,6 @@ export class WebhooksController {
       throw new BadRequestException('Missing raw body');
     }
 
-    return this.webhooksService.processGithubWebhook(event, signature, req.rawBody, req.body);
+    return this.webhooksService.processGithubWebhook(event, signature, req.rawBody, req.body, deliveryId);
   }
 }

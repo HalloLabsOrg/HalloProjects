@@ -212,6 +212,7 @@ model Deployment {
   startedAt     DateTime?        @map("started_at")
   completedAt   DateTime?        @map("completed_at")
   logs          String?          @db.Text
+  duration      Int?
   createdAt     DateTime         @default(now()) @map("created_at")
 
   service     Service            @relation(fields: [serviceId], references: [id])
@@ -219,6 +220,13 @@ model Deployment {
   provider    ProviderConnection @relation(fields: [providerId], references: [id])
 
   @@map("deployments")
+}
+
+model ProcessedWebhook {
+  id          String   @id
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("processed_webhooks")
 }
 
 model MonitoringResult {
@@ -270,3 +278,4 @@ model Template {
 
   @@map("templates")
 }
+
