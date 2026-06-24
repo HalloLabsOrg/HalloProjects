@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   projectsApi,
@@ -45,6 +45,8 @@ import {
   ChevronRight,
   RotateCcw,
   Search,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -71,11 +73,21 @@ function formatDuration(seconds: number | null | undefined) {
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [tab, setTab] = useState<Tab>('overview');
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: '', repositoryId: '', branch: 'main' });
+
+  // Project Edit / Delete states
+  const [projectEditOpen, setProjectEditOpen] = useState(false);
+  const [projectEditForm, setProjectEditForm] = useState({ name: '', description: '' });
+  const [projectDeleteOpen, setProjectDeleteOpen] = useState(false);
+
+  // Service Delete states
+  const [serviceToDelete, setServiceToDelete] = useState<any>(null);
+  const [serviceDeleteOpen, setServiceDeleteOpen] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -156,6 +168,39 @@ export default function ProjectDetailPage() {
     onError: () => toast({ title: 'Failed to create service', variant: 'destructive' }),
   });
 
+  const updateProjectMutation = useMutation({
+    mutationFn: () => projectsApi.update(id, projectEditForm),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setProjectEditOpen(false);
+      toast({ title: 'Project updated successfully' });
+    },
+    onError: () => toast({ title: 'Failed to update project', variant: 'destructive' }),
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: () => projectsApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setProjectDeleteOpen(false);
+      toast({ title: 'Project deleted successfully' });
+      router.push('/projects');
+    },
+    onError: () => toast({ title: 'Failed to delete project', variant: 'destructive' }),
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: (serviceId: string) => servicesApi.remove(id, serviceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services', id] });
+      setServiceDeleteOpen(false);
+      setServiceToDelete(null);
+      toast({ title: 'Service deleted successfully' });
+    },
+    onError: () => toast({ title: 'Failed to delete service', variant: 'destructive' }),
+  });
+
   const proj = project as any;
   const svcList = (services as any[]) ?? [];
   const deployments = (deploymentsData as any)?.data ?? [];
@@ -186,12 +231,31 @@ export default function ProjectDetailPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{proj?.name}</h1>
-          <Badge>{proj?.status}</Badge>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{proj?.name}</h1>
+            <Badge>{proj?.status}</Badge>
+          </div>
+          {proj?.description && <p className="text-muted-foreground mt-1">{proj.description}</p>}
         </div>
-        {proj?.description && <p className="text-muted-foreground mt-1">{proj.description}</p>}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setProjectEditForm({ name: proj?.name ?? '', description: proj?.description ?? '' });
+              setProjectEditOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Project
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setProjectDeleteOpen(true)}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Project
+          </Button>
+        </div>
       </div>
 
       <div className="flex border-b mb-6">
@@ -312,6 +376,7 @@ export default function ProjectDetailPage() {
                   <TableHead>Repository</TableHead>
                   <TableHead>Branch</TableHead>
                   <TableHead>Deployments</TableHead>
+                  <TableHead className="w-20 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -325,6 +390,20 @@ export default function ProjectDetailPage() {
                       <code className="text-xs bg-muted px-1 py-0.5 rounded">{svc.branch}</code>
                     </TableCell>
                     <TableCell>{svc._count?.deployments ?? 0}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setServiceToDelete(svc);
+                          setServiceDeleteOpen(true);
+                        }}
+                        title="Delete Service"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -605,6 +684,96 @@ export default function ProjectDetailPage() {
       {tab === 'variables' && (
         <VariablesTab projectId={proj.id} environments={proj?.environments ?? []} />
       )}
+
+      {/* Edit Project Dialog */}
+      <Dialog open={projectEditOpen} onOpenChange={setProjectEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <Label>Project Name</Label>
+              <Input
+                placeholder="My Project"
+                value={projectEditForm.name}
+                onChange={(e) => setProjectEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Description (optional)</Label>
+              <Input
+                placeholder="A brief description"
+                value={projectEditForm.description}
+                onChange={(e) => setProjectEditForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => updateProjectMutation.mutate()}
+              disabled={updateProjectMutation.isPending || !projectEditForm.name}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Dialog */}
+      <Dialog open={projectDeleteOpen} onOpenChange={setProjectDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete project <strong>{proj?.name}</strong>? This will
+              permanently delete all its services and environment configurations. This action cannot
+              be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setProjectDeleteOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteProjectMutation.mutate()}
+                disabled={deleteProjectMutation.isPending}
+              >
+                Delete Project
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Service Dialog */}
+      <Dialog open={serviceDeleteOpen} onOpenChange={setServiceDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete service <strong>{serviceToDelete?.name}</strong>? This
+              will permanently delete the service and all its deployments. This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setServiceDeleteOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteServiceMutation.mutate(serviceToDelete?.id)}
+                disabled={deleteServiceMutation.isPending}
+              >
+                Delete Service
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

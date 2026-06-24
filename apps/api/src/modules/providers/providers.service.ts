@@ -52,8 +52,6 @@ export class ProvidersService {
       },
     });
 
-
-
     return this.maskSecrets(connection);
   }
 
@@ -72,8 +70,6 @@ export class ProvidersService {
         isActive: true,
       },
     });
-
-
 
     return this.maskSecrets(connection);
   }

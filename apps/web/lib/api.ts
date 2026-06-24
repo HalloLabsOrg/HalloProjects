@@ -52,12 +52,15 @@ export const repositoriesApi = {
       .then((r) => r.data),
   sync: (payload?: { providerId?: string; externalIds?: string[] }) =>
     apiClient
-      .post('/api/repositories/sync', { externalIds: payload?.externalIds }, { params: { providerId: payload?.providerId } })
+      .post(
+        '/api/repositories/sync',
+        { externalIds: payload?.externalIds },
+        { params: { providerId: payload?.providerId } },
+      )
       .then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
-  remove: (id: string) =>
-    apiClient.delete(`/api/repositories/${id}`).then((r) => r.data),
+  remove: (id: string) => apiClient.delete(`/api/repositories/${id}`).then((r) => r.data),
 };
 
 // Projects
@@ -176,8 +179,12 @@ export const usersApi = {
     apiClient.get<{ data: unknown[]; meta: unknown }>('/api/users', { params }).then((r) => r.data),
   create: (dto: unknown) =>
     apiClient.post<{ data: unknown }>('/api/users', dto).then((r) => r.data.data),
+  update: (id: string, dto: unknown) =>
+    apiClient.patch<{ data: unknown }>(`/api/users/${id}`, dto).then((r) => r.data.data),
   disable: (id: string) =>
     apiClient.patch<{ data: unknown }>(`/api/users/${id}/disable`).then((r) => r.data.data),
+  remove: (id: string) =>
+    apiClient.delete<{ data: unknown }>(`/api/users/${id}`).then((r) => r.data.data),
 };
 
 // Audit Logs

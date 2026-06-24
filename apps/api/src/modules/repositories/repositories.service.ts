@@ -45,7 +45,7 @@ export class RepositoriesService {
   }
 
   async delete(id: string) {
-    const repo = await this.findOne(id);
+    await this.findOne(id);
 
     const serviceCount = await this.prisma.service.count({
       where: { repositoryId: id },

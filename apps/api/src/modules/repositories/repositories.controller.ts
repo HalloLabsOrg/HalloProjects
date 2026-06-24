@@ -67,9 +67,7 @@ export class RepositoriesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a repository' })
-  async remove(
-    @Param('id') id: string,
-  ) {
+  async remove(@Param('id') id: string) {
     return this.repositoriesService.delete(id);
   }
 }

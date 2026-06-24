@@ -290,8 +290,6 @@ export class GithubAppController {
       });
     }
 
-
-
     await this.auditLogsService.log({
       action: AuditAction.PROVIDER_CONNECTED,
       userId: user.id,

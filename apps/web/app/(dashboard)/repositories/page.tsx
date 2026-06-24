@@ -65,7 +65,7 @@ export default function RepositoriesPage() {
 
   const githubProviders = useMemo(() => {
     return (providersData ?? []).filter(
-      (p: any) => p.type === 'GITHUB' && p.config?.authMethod !== 'github_app'
+      (p: any) => p.type === 'GITHUB' && p.config?.authMethod !== 'github_app',
     );
   }, [providersData]);
 
@@ -76,7 +76,7 @@ export default function RepositoriesPage() {
     enabled: !!selectedProviderId && importOpen,
   });
 
-  const repos = (data as any)?.data ?? [];
+  const repos = useMemo(() => (data as any)?.data ?? [], [data]);
 
   const localExternalIds = useMemo(() => {
     return new Set(repos.map((r: any) => r.externalId));
@@ -85,15 +85,13 @@ export default function RepositoriesPage() {
   const filteredRemoteRepos = useMemo(() => {
     if (!remoteRepos) return [];
     return remoteRepos.filter((repo: any) =>
-      repo.fullName.toLowerCase().includes(searchRemote.toLowerCase())
+      repo.fullName.toLowerCase().includes(searchRemote.toLowerCase()),
     );
   }, [remoteRepos, searchRemote]);
 
   const handleToggleRepo = (externalId: string) => {
     setSelectedExternalIds((prev) =>
-      prev.includes(externalId)
-        ? prev.filter((id) => id !== externalId)
-        : [...prev, externalId]
+      prev.includes(externalId) ? prev.filter((id) => id !== externalId) : [...prev, externalId],
     );
   };
 
@@ -203,7 +201,8 @@ export default function RepositoriesPage() {
                         onClick={toggleSelectAll}
                         className="text-xs text-primary hover:underline font-medium"
                       >
-                        {selectedExternalIds.length === remoteRepos.filter((r: any) => !localExternalIds.has(r.externalId)).length
+                        {selectedExternalIds.length ===
+                        remoteRepos.filter((r: any) => !localExternalIds.has(r.externalId)).length
                           ? 'Deselect All'
                           : 'Select All'}
                       </button>
@@ -244,7 +243,9 @@ export default function RepositoriesPage() {
                                 type="checkbox"
                                 id={`repo-${repo.externalId}`}
                                 disabled={isImported}
-                                checked={isImported || selectedExternalIds.includes(repo.externalId)}
+                                checked={
+                                  isImported || selectedExternalIds.includes(repo.externalId)
+                                }
                                 onChange={() => handleToggleRepo(repo.externalId)}
                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                               />
@@ -257,9 +258,14 @@ export default function RepositoriesPage() {
                             </div>
                             <div className="flex items-center space-x-1.5">
                               {isImported ? (
-                                <Badge variant="secondary" className="text-xs">Imported</Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  Imported
+                                </Badge>
                               ) : (
-                                <Badge variant={repo.visibility === 'private' ? 'secondary' : 'outline'} className="text-xs capitalize">
+                                <Badge
+                                  variant={repo.visibility === 'private' ? 'secondary' : 'outline'}
+                                  className="text-xs capitalize"
+                                >
                                   {repo.visibility}
                                 </Badge>
                               )}
@@ -314,7 +320,9 @@ export default function RepositoriesPage() {
       </div>
 
       {isLoading ? (
-        <TableSkeleton columns={['Name', 'Provider', 'Branch', 'Visibility', 'Last Synced', 'Actions']} />
+        <TableSkeleton
+          columns={['Name', 'Provider', 'Branch', 'Visibility', 'Last Synced', 'Actions']}
+        />
       ) : repos.length === 0 ? (
         <EmptyState
           icon={GitBranch}
@@ -375,7 +383,8 @@ export default function RepositoriesPage() {
           <DialogHeader>
             <DialogTitle>Delete Repository</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <strong>{repoToDelete?.fullName}</strong>? This action cannot be undone and will remove it from the local HALLO Projects registry.
+              Are you sure you want to delete <strong>{repoToDelete?.fullName}</strong>? This action
+              cannot be undone and will remove it from the local HALLO Projects registry.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
