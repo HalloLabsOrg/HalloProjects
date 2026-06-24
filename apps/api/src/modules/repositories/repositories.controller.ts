@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Req, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Req, Body, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RepositoriesService } from './repositories.service';
 import { ParsePaginationPipe } from '../../common/pipes/parse-pagination.pipe';
@@ -63,5 +63,13 @@ export class RepositoriesController {
       req,
     });
     return result;
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a repository' })
+  async remove(
+    @Param('id') id: string,
+  ) {
+    return this.repositoriesService.delete(id);
   }
 }

@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/empty-state';
 import { TableSkeleton } from '@/components/shared/table-skeleton';
-import { GitBranch, Loader2, Plus, Search } from 'lucide-react';
+import { GitBranch, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function RepositoriesPage() {
@@ -45,6 +45,10 @@ export default function RepositoriesPage() {
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [selectedExternalIds, setSelectedExternalIds] = useState<string[]>([]);
   const [searchRemote, setSearchRemote] = useState('');
+
+  // Delete confirm state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [repoToDelete, setRepoToDelete] = useState<any>(null);
 
   // Query active local repositories
   const { data, isLoading } = useQuery({
@@ -125,6 +129,25 @@ export default function RepositoriesPage() {
       setSearchRemote('');
     },
     onError: () => toast({ title: 'Import failed', variant: 'destructive' }),
+  });
+
+  // Delete Mutation for deleting repository
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => repositoriesApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repositories'] });
+      toast({ title: 'Repository deleted successfully' });
+      setDeleteConfirmOpen(false);
+      setRepoToDelete(null);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || 'Delete failed';
+      toast({
+        title: 'Delete failed',
+        description: message,
+        variant: 'destructive',
+      });
+    },
   });
 
   return (
@@ -291,7 +314,7 @@ export default function RepositoriesPage() {
       </div>
 
       {isLoading ? (
-        <TableSkeleton columns={['Name', 'Provider', 'Branch', 'Visibility', 'Last Synced']} />
+        <TableSkeleton columns={['Name', 'Provider', 'Branch', 'Visibility', 'Last Synced', 'Actions']} />
       ) : repos.length === 0 ? (
         <EmptyState
           icon={GitBranch}
@@ -308,6 +331,7 @@ export default function RepositoriesPage() {
               <TableHead>Branch</TableHead>
               <TableHead>Visibility</TableHead>
               <TableHead>Last Synced</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -326,11 +350,62 @@ export default function RepositoriesPage() {
                 <TableCell className="text-muted-foreground text-sm">
                   {repo.syncedAt ? new Date(repo.syncedAt).toLocaleDateString() : '—'}
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setRepoToDelete(repo);
+                      setDeleteConfirmOpen(true);
+                    }}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Repository</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{repoToDelete?.fullName}</strong>? This action cannot be undone and will remove it from the local HALLO Projects registry.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setRepoToDelete(null);
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate(repoToDelete.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -56,6 +56,8 @@ export const repositoriesApi = {
       .then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
+  remove: (id: string) =>
+    apiClient.delete(`/api/repositories/${id}`).then((r) => r.data),
 };
 
 // Projects
