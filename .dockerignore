@@ -1,0 +1,11 @@
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/build
+**/.env
+**/.env.*
+.git
+**/.DS_Store
+*.docx
+*.pdf
