@@ -30,6 +30,18 @@ export class HealthSchedulerService implements OnApplicationBootstrap {
         }
       }
 
+      // Flush any queued or stuck jobs to prevent queue flooding
+      try {
+        await this.healthQueue.empty();
+        await this.healthQueue.clean(0, 'delayed');
+        await this.healthQueue.clean(0, 'wait');
+        await this.healthQueue.clean(0, 'active');
+        await this.healthQueue.clean(0, 'completed');
+        await this.healthQueue.clean(0, 'failed');
+      } catch (cleanError) {
+        this.logger.warn('Non-fatal error cleaning health check queue:', cleanError);
+      }
+
       // Add new repeatable job
       await this.healthQueue.add(
         JOB_NAMES.CHECK_SERVICE_HEALTH,

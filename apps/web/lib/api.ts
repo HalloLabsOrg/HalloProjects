@@ -171,18 +171,20 @@ export const auditLogsApi = {
 export const monitoringApi = {
   getSummary: () =>
     apiClient
-      .get<{ id: string; name: string; services: any[] }[]>('/api/monitoring')
-      .then((r) => r.data),
+      .get<{ data: { id: string; name: string; services: any[] }[] }>('/api/monitoring')
+      .then((r) => r.data.data),
   getServiceDetail: (serviceId: string) =>
-    apiClient.get<any>(`/api/monitoring/${serviceId}`).then((r) => r.data),
+    apiClient.get<any>(`/api/monitoring/${serviceId}`).then((r) => r.data.data),
   getServiceHistory: (serviceId: string, params?: { page?: number; limit?: number }) =>
     apiClient
       .get<{
-        results: any[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
+        data: {
+          results: any[];
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
       }>(`/api/monitoring/${serviceId}/history`, { params })
-      .then((r) => r.data),
+      .then((r) => r.data.data),
 };

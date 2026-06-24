@@ -112,14 +112,14 @@ export default function MonitoringPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {projects.map((project) => (
+          {projects.map((project: any) => (
             <div key={project.id} className="space-y-4">
               <h2 className="text-lg font-bold tracking-tight text-muted-foreground border-b pb-2">
                 {project.name}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.services.map((svc) => (
+                {project.services.map((svc: any) => (
                   <div
                     key={svc.id}
                     onClick={() => {
@@ -180,7 +180,7 @@ export default function MonitoringPage() {
             </DialogTitle>
           </DialogHeader>
 
-          {isDetailLoading ? (
+          {isDetailLoading || !detail ? (
             <div className="space-y-4 py-4">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-40 w-full" />
