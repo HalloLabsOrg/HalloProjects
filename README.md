@@ -1,164 +1,106 @@
-# 🚀 HALLO Projects
+<p align="center">
+  <img src="apps/docs/static/img/logo.svg" alt="HALLO Projects Logo" width="120" />
+</p>
 
-An open-source, self-hosted Platform-as-a-Service (PaaS) engine designed to simplify service deployments, repository synchronization, and server orchestration. Built with a modern, high-performance TypeScript monorepo architecture, HALLO Projects acts as a control center for managing your web applications, git connections, environment variables, and remote infrastructure.
+<h1 align="center">HALLO Projects</h1>
 
----
-
-## 🏛️ Architecture & System Design
-
-HALLO Projects utilizes a modular monorepo system composed of a frontend dashboard, a REST API server, and a background task worker powered by Redis and BullMQ.
-
-```mermaid
-graph TD
-    %% Clients
-    User([Developer / Administrator]) -->|HTTPS| WebApp[Next.js Dashboard]
-
-    %% Main Application Gateway
-    WebApp -->|REST API| API[NestJS API Server]
-
-    %% Databases & Queues
-    API -->|Read/Write| DB[(PostgreSQL Database)]
-    API -->|Queue Jobs| Redis[(Redis Queue / BullMQ)]
-
-    %% Background Workers
-    Worker[NestJS Task Worker] <-->|Processes Jobs| Redis
-    Worker -->|Read/Write| DB
-
-    %% External Integration Providers
-    Worker -->|Deploy Services| Coolify[Coolify API Provider]
-    Worker -->|Fetch Repos & Webhooks| GitHub[GitHub API Provider]
-
-    %% Subsystem Connections
-    API -->|Fetch Connection Configs| Decrypt[AES-256 Decryption Engine]
-```
+<p align="center">
+  <strong>Platform-as-a-Service (PaaS) mandiri untuk mengelola, mendeploy, dan mengorkestrasi web service secara otomatis di server Anda sendiri.</strong>
+</p>
 
 ---
 
-## ✨ Core Features
+## 🌟 Apa itu HALLO Projects?
 
-- **🌐 Centralized Service Management**: Group deployments by Projects and Environments (Production, Staging, Development).
-- **🐙 GitHub Integration**: Connect repository accounts using Personal Access Tokens (PAT), automatically register webhook listeners, and deploy specific branches on git push.
-- **☁️ Coolify Provider Integration**: Orchestrate remote servers and Docker environments through Coolify's API.
-- **🔄 Deployment Engine**:
-  - Live deployment log streaming.
-  - Multi-stage build queue handling (Pending, Building, Deploying, Success, Failed).
-  - Cancel active/pending deployments directly from the dashboard UI.
-- **🔑 Secure Environment Variables**:
-  - Automatically encrypts all environment variables at rest using AES-256-GCM.
-  - Strict masking of secret variables (`isSecret: true`) returning `***` in API payloads.
-- **📋 Audit Logging**: Complete visibility with comprehensive user activity history tracking.
+**HALLO Projects** adalah platform PaaS self-hosted yang dirancang untuk menjembatani kode repositori Anda langsung ke server production (VPS) secara instan. Platform ini menjadi solusi alternatif mandiri (seperti Heroku, Vercel, atau Coolify) yang memberikan kontrol penuh atas infrastruktur Anda tanpa biaya berlangganan bulanan yang mahal.
+
+Dengan antarmuka dashboard yang bersih dan alur kerja berbasis Git, Anda dapat mengelola puluhan service, database, log, dan konfigurasi lingkungan dalam satu panel kontrol terpusat.
 
 ---
 
-## 🛠️ Technology Stack
+## 🎯 Skenario Solusi
 
-- **Monorepo Management**: [PNPM Workspaces](https://pnpm.io/workspaces) & [Turborepo](https://turbo.build/)
-- **Frontend Dashboard**: [Next.js 14](https://nextjs.org/) (App Router), Tailwind CSS, Shadcn UI, Zustand, TanStack Query.
-- **Backend Service**: [NestJS](https://nestjs.com/) (Modular architecture, Guards, Interceptors).
-- **Database Access**: [Prisma ORM](https://www.prisma.io/) with a [PostgreSQL](https://www.postgresql.org/) database.
-- **Job Orchestration**: [BullMQ](https://bullmq.io/) with [Redis](https://redis.io/) for high-throughput background processing.
-- **Documentation Engine**: [Docusaurus 3](https://docusaurus.io/) serving premium guide pages.
+HALLO Projects memecahkan masalah manajemen server tradisional melalui beberapa skenario praktis:
 
----
+### 1. Konsolidasi Aplikasi pada Satu VPS (Server Cost Efficiency)
 
-## 📂 Project Directory Structure
+- **Masalah:** Mengelola banyak aplikasi (Frontend, API, Worker, Database) di satu server sering kali rumit karena konflik port, konfigurasi reverse proxy manual, dan overhead resource.
+- **Solusi:** HALLO Projects mengisolasi setiap service menggunakan container Docker secara otomatis dan mengaturnya di balik Caddy Reverse Proxy. Semua service dapat berbagi resource server yang sama secara aman dengan routing sub-domain otomatis.
 
-```
-.
-├── apps/
-│   ├── api/          # NestJS REST API Gateway
-│   ├── docs/         # Docusaurus documentation website
-│   ├── web/          # Next.js 14 client dashboard
-│   └── worker/       # NestJS BullMQ processor for background tasks
-├── packages/
-│   ├── sdk/          # Unified HALLO PaaS SDK interfaces
-│   ├── shared/       # Shared TypeScript constants, schemas, and helpers
-│   └── ui/           # Shared Tailwind/React component library
-├── providers/
-│   ├── coolify/      # Coolify API client implementation
-│   └── github/       # GitHub Repository & Hook client implementation
-├── docker/
-│   ├── Dockerfile.*  # Docker build configurations
-│   ├── docker-compose.yml # Dev/Prod container infrastructure orchestration
-│   └── Caddyfile     # Web routing and reverse proxy configs
-└── TECHNICAL_DOCUMENTATION.md # Comprehensive roadmap and schema specifications
-```
+### 2. Auto-Deployment Berbasis Git (Push-to-Deploy)
+
+- **Masalah:** Mengatur pipeline CI/CD manual (GitHub Actions, GitLab CI) membutuhkan konfigurasi SSH key, runner, dan script bash yang rumit di setiap project.
+- **Solusi:** Cukup hubungkan repositori GitHub Anda menggunakan Personal Access Token (PAT). HALLO Projects akan mendaftarkan webhook otomatis. Setiap kali Anda melakukan `git push` ke branch yang ditentukan, server akan melakukan pull, build, dan deploy versi terbaru secara langsung.
+
+### 3. Keamanan Variabel Lingkungan & Secret (Secret Protection)
+
+- **Masalah:** Menaruh file `.env` di server rentan bocor, dan menampilkannya secara polos di dashboard admin berisiko tinggi.
+- **Solusi:** Semua environment variables dienkripsi di database menggunakan algoritma AES-256-GCM. Untuk variabel bertipe _Secret_, nilainya secara otomatis disamarkan (`***`) di API dan dashboard.
+
+### 4. Kontrol dan Pemantauan Deployment (Orchestration & Logs)
+
+- **Masalah:** Sulit melacak status deployment yang sedang berjalan atau menghentikan proses build yang salah arah tanpa mengakses terminal server via SSH.
+- **Solusi:** Dashboard menampilkan status deployment (Pending, Building, Deploying, Success, Failed) secara real-time disertai log build langsung. Operator juga dapat membatalkan proses deployment yang sedang berjalan hanya dengan satu klik tombol "Cancel".
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Panduan Instalasi (VPS Production)
 
-### Prerequisites
+HALLO Projects dirancang agar mudah dijalankan menggunakan Docker Compose. Ikuti langkah-langkah berikut untuk memasangnya di server VPS Anda.
 
-Ensure you have the following installed on your machine:
+### Prasyarat
 
-- [Node.js](https://nodejs.org/) (v22.0.0 or higher)
-- [PNPM](https://pnpm.io/) (v9.0.0 or higher)
-- [Docker](https://www.docker.com/) & Docker Compose
-- Running instances of **PostgreSQL** and **Redis**
+- Server dengan OS Linux (direkomendasikan Ubuntu 22.04 LTS atau lebih baru)
+- Docker dan Docker Compose terpasang
+- Domain/Sub-domain yang sudah diarahkan (DNS A Record) ke alamat IP server VPS Anda
 
-### Setup Instructions
+### Langkah-Langkah Pemasangan
 
-1. **Clone the Repository**:
+1. **Clone Repositori**:
 
    ```bash
    git clone https://github.com/hallolabs/hallo-projects.git
    cd hallo-projects
    ```
 
-2. **Configure Environment Variables**:
-   Copy the example environment files for the root workspace and apps:
+2. **Siapkan Konfigurasi Environment**:
+   Salin file konfigurasi docker environment:
 
    ```bash
-   cp .env.example .env
-   cp apps/api/.env.example apps/api/.env
-   cp apps/web/.env.example apps/web/.env
+   cp .env.docker .env
    ```
 
-3. **Install Dependencies**:
+   Buka file `.env` yang baru dibuat dan sesuaikan konfigurasi domain Anda:
+
+   ```env
+   DOMAIN=domain-anda.com
+   JWT_SECRET=gunakan-string-acak-yang-aman
+   ENCRYPTION_KEY=32-karakter-string-kunci-enkripsi
+   ```
+
+3. **Jalankan Aplikasi dengan Docker Compose**:
+   Mulai service dalam mode daemon:
 
    ```bash
-   pnpm install
+   docker compose -f docker/docker-compose.yml up -d
    ```
 
-4. **Initialize Database Schema**:
-   Run the Prisma database migrations to set up Postgres:
-
-   ```bash
-   pnpm --filter @hallo/api prisma migrate dev
-   ```
-
-5. **Start Dev Servers**:
-   Run the monorepo applications concurrently:
-   ```bash
-   pnpm dev
-   ```
-   This will spin up:
-   - **Frontend Dashboard**: `http://localhost:3000`
-   - **REST API Server**: `http://localhost:4000`
-   - **Queue Task Worker**: Background daemon
-   - **Documentation Site**: `http://localhost:3001`
+4. **Akses Dashboard**:
+   Setelah container berjalan, Caddy akan mengurus sertifikat SSL (HTTPS) secara otomatis. Anda dapat mengakses platform pada alamat sub-domain berikut:
+   - **Dashboard UI:** `https://app.domain-anda.com`
+   - **API Server:** `https://api.domain-anda.com`
+   - **Dokumentasi Panduan:** `https://docs.domain-anda.com`
 
 ---
 
-## 🐳 Deployment (VPS Production)
+## 🛠️ Langkah Awal Penggunaan
 
-A production-ready stack is defined in the `docker` directory. You can deploy it using Docker Compose:
-
-```bash
-docker compose -f docker/docker-compose.yml up -d
-```
-
-### Routing Setup
-
-The Caddy configuration manages sub-domains routing:
-
-- `app.{$DOMAIN}` -> Routes to the Next.js Dashboard.
-- `api.{$DOMAIN}` -> Routes to the NestJS API.
-- `docs.{$DOMAIN}` -> Routes to the Docusaurus Site.
+1. **Buat Akun Administrator**: Buka halaman dashboard pada kunjungan pertama untuk mendaftarkan akun administrator utama.
+2. **Hubungkan GitHub Provider**: Masuk ke menu **Providers**, tambahkan koneksi GitHub baru dengan memasukkan Personal Access Token (PAT) klasik Anda.
+3. **Buat Project Baru**: Masuk ke menu **Projects**, buat workspace project baru dan hubungkan repositori Git Anda untuk memulai deployment pertama.
 
 ---
 
-## 📄 License
+## 📄 Lisensi
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Project ini dilisensikan di bawah lisensi MIT - Lihat file [LICENSE](LICENSE) untuk informasi lebih lanjut.
