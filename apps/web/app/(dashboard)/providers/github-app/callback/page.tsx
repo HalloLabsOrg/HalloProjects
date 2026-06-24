@@ -29,9 +29,13 @@ function CallbackContent() {
         title: 'GitHub App Registered Successfully!',
         description: `Registered app: ${data.appName}`,
       });
-      // After App registration, let's trigger the install flow right away for convenience!
-      router.push('/providers');
-      router.refresh();
+      if (typeof window !== 'undefined' && window.opener) {
+        window.opener.postMessage('github-app-connected', '*');
+        window.close();
+      } else {
+        router.push('/providers');
+        router.refresh();
+      }
     },
     onError: (err: any) => {
       const message =
@@ -53,8 +57,13 @@ function CallbackContent() {
         title: 'GitHub Account Connected!',
         description: `Connected organization/user: ${data.owner}`,
       });
-      router.push('/providers');
-      router.refresh();
+      if (typeof window !== 'undefined' && window.opener) {
+        window.opener.postMessage('github-connected', '*');
+        window.close();
+      } else {
+        router.push('/providers');
+        router.refresh();
+      }
     },
     onError: (err: any) => {
       const message =

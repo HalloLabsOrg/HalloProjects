@@ -29,6 +29,15 @@ export default function ProvidersPage() {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['providers'] });
     queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'github-connected' || event.data === 'github-app-connected') {
+        queryClient.invalidateQueries({ queryKey: ['providers'] });
+        queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [queryClient]);
 
   const { data, isLoading } = useQuery({
@@ -79,6 +88,7 @@ export default function ProvidersPage() {
       const formElement = document.createElement('form');
       formElement.method = 'POST';
       formElement.action = 'https://github.com/settings/apps/new';
+      formElement.target = '_blank';
 
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -88,6 +98,7 @@ export default function ProvidersPage() {
       formElement.appendChild(input);
       document.body.appendChild(formElement);
       formElement.submit();
+      document.body.removeChild(formElement);
     } catch (err) {
       toast({
         title: 'Failed to initiate GitHub App creation',
@@ -168,7 +179,7 @@ export default function ProvidersPage() {
                       size="lg"
                       onClick={() => {
                         if (appStatus?.htmlUrl) {
-                          window.location.href = `${appStatus.htmlUrl}/installations/new`;
+                          window.open(`${appStatus.htmlUrl}/installations/new`, '_blank');
                         }
                       }}
                     >
@@ -261,7 +272,7 @@ export default function ProvidersPage() {
               variant="outline"
               onClick={() => {
                 if (appStatus?.htmlUrl) {
-                  window.location.href = `${appStatus.htmlUrl}/installations/new`;
+                  window.open(`${appStatus.htmlUrl}/installations/new`, '_blank');
                 }
               }}
             >
