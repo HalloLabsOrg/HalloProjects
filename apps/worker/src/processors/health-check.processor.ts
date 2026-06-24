@@ -12,7 +12,7 @@ export class HealthCheckProcessor {
   constructor(private readonly prisma: PrismaService) {}
 
   @Process(JOB_NAMES.CHECK_SERVICE_HEALTH)
-  async handleCheck(job: Job) {
+  async handleCheck(_job: Job) {
     this.logger.log('Executing repeatable service health check job');
 
     try {
@@ -21,10 +21,7 @@ export class HealthCheckProcessor {
           services: true,
           environments: {
             where: {
-              OR: [
-                { domain: { not: null } },
-                { healthCheckUrl: { not: null } },
-              ],
+              OR: [{ domain: { not: null } }, { healthCheckUrl: { not: null } }],
             },
           },
         },
@@ -41,9 +38,7 @@ export class HealthCheckProcessor {
             targetUrl = this.normalizeUrl(targetUrl);
             const timeoutMs = (service.healthCheckTimeout || 10) * 1000;
 
-            checkPromises.push(
-              this.performCheck(service.id, environment.id, targetUrl, timeoutMs),
-            );
+            checkPromises.push(this.performCheck(service.id, environment.id, targetUrl, timeoutMs));
           }
         }
       }
@@ -71,8 +66,10 @@ export class HealthCheckProcessor {
   ): Promise<void> {
     const startTime = Date.now();
     try {
-      this.logger.debug(`Checking service ${serviceId} in environment ${environmentId} at URL: ${url}`);
-      
+      this.logger.debug(
+        `Checking service ${serviceId} in environment ${environmentId} at URL: ${url}`,
+      );
+
       const response = await fetch(url, {
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -99,9 +96,12 @@ export class HealthCheckProcessor {
     } catch (error: any) {
       const responseTime = Date.now() - startTime;
       this.logger.warn(`Health check failed for service ${serviceId} at ${url}: ${error.message}`);
-      
-      const isTimeout = error.name === 'TimeoutError' || error.message?.includes('timeout') || error.message?.includes('aborted');
-      
+
+      const isTimeout =
+        error.name === 'TimeoutError' ||
+        error.message?.includes('timeout') ||
+        error.message?.includes('aborted');
+
       await this.prisma.monitoringResult.create({
         data: {
           serviceId,

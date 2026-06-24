@@ -112,19 +112,23 @@ export class RepositoriesService {
               : `https://${domain}/api/webhooks/github`;
 
             const decryptedConfig = this.decryptConfig(connection.config as Record<string, string>);
-            const webhookSecret = decryptedConfig.webhookSecret || process.env.GITHUB_WEBHOOK_SECRET || 'hallo-webhook-secret';
+            const webhookSecret =
+              decryptedConfig.webhookSecret ||
+              process.env.GITHUB_WEBHOOK_SECRET ||
+              'hallo-webhook-secret';
 
-            await githubProvider.registerWebhook(repo.externalId, {
-              url: webhookUrl,
-              secret: webhookSecret,
-              events: ['push', 'pull_request'],
-            }).catch((err: Error) => {
-              // Ignore already exists error, otherwise log in results
-              if (!err.message?.includes('already exists')) {
-                errors.push(`Webhook registration failed for ${repo.fullName}: ${err.message}`);
-              }
-            });
-
+            await githubProvider
+              .registerWebhook(repo.externalId, {
+                url: webhookUrl,
+                secret: webhookSecret,
+                events: ['push', 'pull_request'],
+              })
+              .catch((err: Error) => {
+                // Ignore already exists error, otherwise log in results
+                if (!err.message?.includes('already exists')) {
+                  errors.push(`Webhook registration failed for ${repo.fullName}: ${err.message}`);
+                }
+              });
           } catch (err: unknown) {
             errors.push(
               `${repo.fullName}: ${err instanceof Error ? err.message : 'unknown error'}`,

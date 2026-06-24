@@ -25,6 +25,12 @@ export class WebhooksController {
       throw new BadRequestException('Missing raw body');
     }
 
-    return this.webhooksService.processGithubWebhook(event, signature, req.rawBody, req.body, deliveryId);
+    return this.webhooksService.processGithubWebhook(
+      event,
+      signature,
+      req.rawBody,
+      req.body,
+      deliveryId,
+    );
   }
 }

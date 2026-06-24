@@ -108,7 +108,9 @@ export class DeploymentProcessor {
   private async updateStatus(deploymentId: string, status: DeploymentStatus, logs?: string) {
     const deployment = await this.prisma.deployment.findUnique({ where: { id: deploymentId } });
     const completedAt =
-      status === DeploymentStatus.FAILED || status === DeploymentStatus.SUCCESS || status === DeploymentStatus.CANCELLED
+      status === DeploymentStatus.FAILED ||
+      status === DeploymentStatus.SUCCESS ||
+      status === DeploymentStatus.CANCELLED
         ? new Date()
         : null;
 
