@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/docs/static/img/logo.svg" alt="HALLO Projects Logo" width="120" />
+  <img src="logo.png" alt="HALLO Projects Logo" width="200" />
 </p>
 
 <h1 align="center">HALLO Projects</h1>
