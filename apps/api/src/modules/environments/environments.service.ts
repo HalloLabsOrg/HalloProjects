@@ -39,7 +39,14 @@ export class EnvironmentsService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     return this.prisma.environment.create({
-      data: { projectId, name: dto.name, slug, branch: dto.branch, domain: dto.domain },
+      data: {
+        projectId,
+        name: dto.name,
+        slug,
+        branch: dto.branch,
+        domain: dto.domain,
+        autoDeploy: dto.autoDeploy ?? true,
+      },
     });
   }
 

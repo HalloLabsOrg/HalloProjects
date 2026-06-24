@@ -63,6 +63,22 @@ export const servicesApi = {
     apiClient.delete(`/api/projects/${projectId}/services/${id}`),
 };
 
+// Environments
+export const environmentsApi = {
+  list: (projectId: string) =>
+    apiClient
+      .get<{ data: unknown[] }>(`/api/projects/${projectId}/environments`)
+      .then((r) => r.data.data),
+  update: (
+    projectId: string,
+    id: string,
+    dto: { name?: string; branch?: string | null; domain?: string | null; autoDeploy?: boolean },
+  ) =>
+    apiClient
+      .patch<{ data: unknown }>(`/api/projects/${projectId}/environments/${id}`, dto)
+      .then((r) => r.data.data),
+};
+
 // Deployments
 export const deploymentsApi = {
   list: (params?: { page?: number; limit?: number; status?: string; serviceId?: string }) =>

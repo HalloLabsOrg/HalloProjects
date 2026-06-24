@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength } from 'class-validator';
+import { IsString, IsOptional, MinLength, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateEnvironmentDto {
@@ -16,6 +16,11 @@ export class CreateEnvironmentDto {
   @IsString()
   @IsOptional()
   domain?: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsBoolean()
+  @IsOptional()
+  autoDeploy?: boolean;
 }
 
 export class UpdateEnvironmentDto {
@@ -34,6 +39,11 @@ export class UpdateEnvironmentDto {
   @IsString()
   @IsOptional()
   domain?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  autoDeploy?: boolean;
 }
 
 export class CreateEnvVariableDto {

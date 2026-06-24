@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, MessageEvent } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TriggerDeployDto } from './dto/deployment.dto';
 import { paginateResponse, paginateArgs } from '../../common/helpers/paginate.helper';
@@ -6,6 +6,8 @@ import { DeploymentStatus } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { QUEUE_NAMES, JOB_NAMES } from '@hallo/shared';
+import { Observable } from 'rxjs';
+import { ProviderFactory } from '../providers/provider.factory';
 
 const CANCELLABLE_STATUSES: DeploymentStatus[] = [
   DeploymentStatus.PENDING,
@@ -18,6 +20,7 @@ export class DeploymentsService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue(QUEUE_NAMES.DEPLOYMENTS) private readonly deployQueue: Queue,
+    private readonly providerFactory: ProviderFactory,
   ) {}
 
   async findAll(
@@ -116,9 +119,75 @@ export class DeploymentsService {
       throw new BadRequestException(`Cannot cancel deployment with status ${deployment.status}`);
     }
 
+    if (deployment.externalId && deployment.providerId) {
+      try {
+        const provider = await this.providerFactory.getDeploymentProvider(deployment.providerId);
+        if (provider.cancel) {
+          await provider.cancel(deployment.externalId);
+        }
+      } catch (err: any) {
+        console.error(`Failed to cancel deployment on provider: ${err.message}`);
+      }
+    }
+
     return this.prisma.deployment.update({
       where: { id },
       data: { status: DeploymentStatus.CANCELLED, completedAt: new Date() },
+    });
+  }
+
+  streamLogs(id: string): Observable<MessageEvent> {
+    let sentLength = 0;
+
+    return new Observable<MessageEvent>((subscriber) => {
+      const poll = async () => {
+        try {
+          const deployment = await this.prisma.deployment.findUnique({
+            where: { id },
+            select: { logs: true, status: true },
+          });
+
+          if (!deployment) {
+            subscriber.next({ data: { logs: '', status: 'FAILED' } });
+            subscriber.complete();
+            return;
+          }
+
+          const logs = deployment.logs ?? '';
+          const newLogs = logs.substring(sentLength);
+          sentLength = logs.length;
+
+          subscriber.next({
+            data: {
+              logs: newLogs,
+              status: deployment.status,
+            },
+          });
+
+          const isTerminal =
+            deployment.status === DeploymentStatus.SUCCESS ||
+            deployment.status === DeploymentStatus.FAILED ||
+            deployment.status === DeploymentStatus.CANCELLED;
+
+          if (isTerminal) {
+            subscriber.complete();
+            return;
+          }
+        } catch (error) {
+          subscriber.error(error);
+        }
+      };
+
+      // Run immediately
+      poll();
+
+      // Set up interval
+      const timer = setInterval(poll, 2000);
+
+      // Clean up on unsubscribe
+      return () => {
+        clearInterval(timer);
+      };
     });
   }
 }

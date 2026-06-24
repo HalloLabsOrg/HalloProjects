@@ -64,6 +64,10 @@ export class CoolifyProvider implements DeploymentProvider {
     await this.client.post(`/api/v1/deployments/${externalId}/restart`);
   }
 
+  async cancel(externalId: string): Promise<void> {
+    await this.client.post(`/api/v1/deployments/${externalId}/stop`);
+  }
+
   private mapStatus(coolifyStatus: string): SdkDeploymentStatus {
     return COOLIFY_STATUS_MAP[coolifyStatus?.toLowerCase()] ?? 'PENDING';
   }

@@ -6,4 +6,5 @@ export interface DeploymentProvider {
   getStatus(externalId: string): Promise<SdkDeploymentStatus>;
   getLogs(externalId: string): Promise<string>;
   rollback(externalId: string): Promise<void>;
+  cancel?(externalId: string): Promise<void>;
 }

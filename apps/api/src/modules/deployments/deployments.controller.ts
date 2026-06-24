@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, Req, Sse, MessageEvent } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DeploymentsService } from './deployments.service';
 import { TriggerDeployDto } from './dto/deployment.dto';
@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { User, DeploymentStatus, AuditAction } from '@prisma/client';
 import { Request } from 'express';
+import { Observable } from 'rxjs';
 
 @ApiTags('Deployments')
 @ApiBearerAuth()
@@ -77,5 +78,11 @@ export class DeploymentsController {
       req,
     });
     return deployment;
+  }
+
+  @Sse('deployments/:id/logs/stream')
+  @ApiOperation({ summary: 'Stream deployment logs' })
+  streamLogs(@Param('id') id: string): Observable<MessageEvent> {
+    return this.deploymentsService.streamLogs(id);
   }
 }

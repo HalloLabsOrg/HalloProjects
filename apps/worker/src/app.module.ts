@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { DeploymentProcessor } from './processors/deployment.processor';
 import { RepositorySyncProcessor } from './processors/repository-sync.processor';
+import { WebhookProcessor } from './processors/webhook.processor';
 import { QUEUE_NAMES } from '@hallo/shared';
 
 @Module({
@@ -19,10 +20,11 @@ import { QUEUE_NAMES } from '@hallo/shared';
     BullModule.registerQueue(
       { name: QUEUE_NAMES.DEPLOYMENTS },
       { name: QUEUE_NAMES.REPOSITORY_SYNC },
+      { name: QUEUE_NAMES.WEBHOOKS },
     ),
     PrismaModule,
     EncryptionModule,
   ],
-  providers: [DeploymentProcessor, RepositorySyncProcessor],
+  providers: [DeploymentProcessor, RepositorySyncProcessor, WebhookProcessor],
 })
 export class AppModule {}
