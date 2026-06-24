@@ -61,6 +61,7 @@ enum AuditAction {
   VARIABLE_CREATED
   VARIABLE_UPDATED
   VARIABLE_DELETED
+  VARIABLE_REVEALED
   PROVIDER_CONNECTED
   PROVIDER_DISCONNECTED
   TEMPLATE_UPLOADED
@@ -148,8 +149,9 @@ model Service {
   repositoryId String   @map("repository_id")
   name         String
   slug         String
-  branch       String   @default("main")
-  createdAt    DateTime @default(now()) @map("created_at")
+  branch             String   @default("main")
+  healthCheckTimeout Int      @default(10) @map("health_check_timeout")
+  createdAt          DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -167,8 +169,9 @@ model Environment {
   name       String
   slug       String
   branch     String?
-  domain     String?
-  autoDeploy Boolean  @default(true) @map("auto_deploy")
+  domain         String?
+  healthCheckUrl String?  @map("health_check_url")
+  autoDeploy     Boolean  @default(true) @map("auto_deploy")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 

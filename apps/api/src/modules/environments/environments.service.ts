@@ -128,6 +128,18 @@ export class EnvironmentsService {
     await this.prisma.environmentVariable.delete({ where: { id: varId } });
   }
 
+  async revealVariable(projectId: string, envId: string, varId: string): Promise<string> {
+    await this.findOne(projectId, envId);
+    const variable = await this.prisma.environmentVariable.findFirst({
+      where: { id: varId, environmentId: envId },
+    });
+    if (!variable) throw new NotFoundException(`Variable ${varId} not found`);
+    if (variable.isSecret) {
+      return this.encryption.decrypt(variable.value);
+    }
+    return variable.value;
+  }
+
   private maskVariable<T extends { isSecret: boolean; value: string; id: string }>(v: T): T {
     return { ...v, value: v.isSecret ? '***' : v.value };
   }

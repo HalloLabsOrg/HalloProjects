@@ -1,11 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { deploymentsApi, projectsApi } from '@/lib/api';
+import { deploymentsApi, projectsApi, monitoringApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FolderKanban, Rocket, AlertCircle, Activity } from 'lucide-react';
+import {
+  FolderKanban,
+  Rocket,
+  AlertCircle,
+  Activity,
+  ShieldCheck,
+  ShieldAlert,
+} from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: projectsData, isLoading: loadingProjects } = useQuery({
@@ -18,17 +25,29 @@ export default function DashboardPage() {
     queryFn: () => deploymentsApi.list({ limit: 10 }),
   });
 
+  const { data: monitoringData, isLoading: loadingMonitoring } = useQuery({
+    queryKey: ['monitoring-summary'],
+    queryFn: () => monitoringApi.getSummary(),
+  });
+
   const projectCount = (projectsData as any)?.meta?.total ?? 0;
   const deployments = (deploymentsData as any)?.data ?? [];
   const totalDeployments = (deploymentsData as any)?.meta?.total ?? 0;
-  const failedDeployments = deployments.filter((d: any) => d.status === 'FAILED').length;
+
+  const allServices = (monitoringData ?? []).flatMap((p: any) => p.services);
+  const offlineServicesCount = allServices.filter((s: any) => s.status === 'OFFLINE').length;
 
   const stats = [
     { label: 'Total Projects', value: projectCount, icon: FolderKanban },
     { label: 'Total Deployments', value: totalDeployments, icon: Rocket },
-    { label: 'Failed (recent)', value: failedDeployments, icon: AlertCircle },
     {
-      label: 'Active',
+      label: 'Offline Services',
+      value: offlineServicesCount,
+      icon: AlertCircle,
+      colorClass: offlineServicesCount > 0 ? 'text-rose-500 font-extrabold' : '',
+    },
+    {
+      label: 'Active Deployments',
       value: deployments.filter((d: any) => ['BUILDING', 'DEPLOYING'].includes(d.status)).length,
       icon: Activity,
     },
@@ -36,7 +55,30 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        {!loadingMonitoring && allServices.length > 0 && (
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${
+              offlineServicesCount > 0
+                ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+            }`}
+          >
+            {offlineServicesCount > 0 ? (
+              <>
+                <ShieldAlert className="h-4 w-4" />
+                <span>{offlineServicesCount} Services Offline</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-4 w-4" />
+                <span>All Systems Operational</span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => {
@@ -50,10 +92,10 @@ export default function DashboardPage() {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loadingDeployments || loadingProjects ? (
+                {loadingDeployments || loadingProjects || loadingMonitoring ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className={`text-2xl font-bold ${stat.colorClass ?? ''}`}>{stat.value}</p>
                 )}
               </CardContent>
             </Card>

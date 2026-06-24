@@ -34,7 +34,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Layers, Plus, Rocket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type Tab = 'overview' | 'services' | 'deployments' | 'environments';
+type Tab = 'overview' | 'services' | 'deployments' | 'environments' | 'variables';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -97,6 +97,7 @@ export default function ProjectDetailPage() {
     { key: 'services', label: 'Services' },
     { key: 'deployments', label: 'Deployments' },
     { key: 'environments', label: 'Environments' },
+    { key: 'variables', label: 'Variables' },
   ];
 
   return (
@@ -287,6 +288,10 @@ export default function ProjectDetailPage() {
           ))}
         </div>
       )}
+
+      {tab === 'variables' && (
+        <VariablesTab projectId={proj.id} environments={proj?.environments ?? []} />
+      )}
     </div>
   );
 }
@@ -304,6 +309,7 @@ function EnvironmentRow({
   const [editing, setEditing] = useState(false);
   const [branch, setBranch] = useState(environment.branch ?? '');
   const [domain, setDomain] = useState(environment.domain ?? '');
+  const [healthCheckUrl, setHealthCheckUrl] = useState(environment.healthCheckUrl ?? '');
   const [autoDeploy, setAutoDeploy] = useState(environment.autoDeploy ?? true);
 
   const updateMutation = useMutation({
@@ -311,6 +317,7 @@ function EnvironmentRow({
       environmentsApi.update(projectId, environment.id, {
         branch: branch || null,
         domain: domain || null,
+        healthCheckUrl: healthCheckUrl || null,
         autoDeploy,
       }),
     onSuccess: () => {
@@ -334,6 +341,7 @@ function EnvironmentRow({
               {environment.branch ?? '—'}
             </code>
             {environment.domain && ` · Domain: ${environment.domain}`}
+            {environment.healthCheckUrl && ` · Health: ${environment.healthCheckUrl}`}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <span
@@ -353,7 +361,7 @@ function EnvironmentRow({
 
       {editing && (
         <div className="mt-4 pt-4 border-t space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
               <Label>Branch Mapping</Label>
               <Input
@@ -368,6 +376,14 @@ function EnvironmentRow({
                 placeholder="myapp.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Health Check URL</Label>
+              <Input
+                placeholder="https://myapp.com/healthz"
+                value={healthCheckUrl}
+                onChange={(e) => setHealthCheckUrl(e.target.value)}
               />
             </div>
           </div>
@@ -395,6 +411,267 @@ function EnvironmentRow({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function VariablesTab({ projectId, environments }: { projectId: string; environments: any[] }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedEnvId, setSelectedEnvId] = useState(environments[0]?.id ?? '');
+  const [revealedVars, setRevealedVars] = useState<Record<string, string>>({});
+  const [newVar, setNewVar] = useState({ key: '', value: '', isSecret: false });
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+
+  const { data: variables, isLoading } = useQuery({
+    queryKey: ['variables', projectId, selectedEnvId],
+    queryFn: () => environmentsApi.listVariables(projectId, selectedEnvId),
+    enabled: !!selectedEnvId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (dto: { key: string; value: string; isSecret: boolean }) =>
+      environmentsApi.createVariable(projectId, selectedEnvId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variables', projectId, selectedEnvId] });
+      setNewVar({ key: '', value: '', isSecret: false });
+      toast({ title: 'Variable added successfully' });
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || 'Failed to add variable';
+      toast({ title: msg, variant: 'destructive' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (varId: string) => environmentsApi.removeVariable(projectId, selectedEnvId, varId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variables', projectId, selectedEnvId] });
+      toast({ title: 'Variable deleted' });
+    },
+  });
+
+  const handleReveal = async (varId: string) => {
+    if (revealedVars[varId]) {
+      setRevealedVars((prev) => {
+        const copy = { ...prev };
+        delete copy[varId];
+        return copy;
+      });
+      return;
+    }
+
+    try {
+      const data = await environmentsApi.revealVariable(projectId, selectedEnvId, varId);
+      setRevealedVars((prev) => ({ ...prev, [varId]: data.value }));
+    } catch {
+      toast({ title: 'Failed to reveal secret variable', variant: 'destructive' });
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkText.trim()) return;
+    const lines = bulkText.split('\n');
+    let importedCount = 0;
+    let failedCount = 0;
+
+    const promises = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      const equalIdx = trimmed.indexOf('=');
+      if (equalIdx === -1) continue;
+
+      const rawKey = trimmed.substring(0, equalIdx).trim();
+      let rawVal = trimmed.substring(equalIdx + 1).trim();
+
+      if (
+        (rawVal.startsWith('"') && rawVal.endsWith('"')) ||
+        (rawVal.startsWith("'") && rawVal.endsWith("'"))
+      ) {
+        rawVal = rawVal.substring(1, rawVal.length - 1);
+      }
+
+      if (rawKey) {
+        promises.push(
+          environmentsApi
+            .createVariable(projectId, selectedEnvId, {
+              key: rawKey,
+              value: rawVal,
+              isSecret: false,
+            })
+            .then(() => {
+              importedCount++;
+            })
+            .catch(() => {
+              failedCount++;
+            }),
+        );
+      }
+    }
+
+    await Promise.all(promises);
+    queryClient.invalidateQueries({ queryKey: ['variables', projectId, selectedEnvId] });
+    setBulkText('');
+    setBulkOpen(false);
+
+    toast({
+      title: 'Bulk Import Finished',
+      description: `Successfully imported ${importedCount} variables.${
+        failedCount > 0 ? ` Failed: ${failedCount} (likely already exist)` : ''
+      }`,
+    });
+  };
+
+  if (!selectedEnvId) {
+    return <p className="text-muted-foreground">Create an environment to manage variables.</p>;
+  }
+
+  const varList = (variables as any[]) ?? [];
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">Environment</Label>
+          <select
+            className="rounded-md border px-3 py-1.5 text-sm bg-background"
+            value={selectedEnvId}
+            onChange={(e) => {
+              setSelectedEnvId(e.target.value);
+              setRevealedVars({});
+            }}
+          >
+            {environments.map((env) => (
+              <option key={env.id} value={env.id}>
+                {env.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
+          Bulk Import (.env)
+        </Button>
+      </div>
+
+      <div className="rounded-lg border p-4 bg-muted/40 space-y-4">
+        <h4 className="font-semibold text-sm">Add Environment Variable</h4>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <Label className="text-xs">Key</Label>
+            <Input
+              placeholder="API_KEY"
+              value={newVar.key}
+              onChange={(e) => setNewVar((v) => ({ ...v, key: e.target.value.toUpperCase() }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Value</Label>
+            <Input
+              placeholder="super-secret-value"
+              value={newVar.value}
+              onChange={(e) => setNewVar((v) => ({ ...v, value: e.target.value }))}
+            />
+          </div>
+          <div className="flex items-end pb-1 gap-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs">
+              <input
+                type="checkbox"
+                checked={newVar.isSecret}
+                onChange={(e) => setNewVar((v) => ({ ...v, isSecret: e.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300 text-primary cursor-pointer"
+              />
+              Secret / Encrypted
+            </label>
+            <Button
+              size="sm"
+              className="ml-auto"
+              disabled={createMutation.isPending || !newVar.key || !newVar.value}
+              onClick={() => createMutation.mutate(newVar)}
+            >
+              Add
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading variables...</p>
+      ) : varList.length === 0 ? (
+        <p className="text-sm text-muted-foreground bg-muted/20 p-4 rounded text-center">
+          No variables configured for this environment.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Key</TableHead>
+              <TableHead>Value</TableHead>
+              <TableHead className="w-32 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {varList.map((v) => {
+              const isRevealed = !!revealedVars[v.id];
+              const displayVal = isRevealed ? revealedVars[v.id] : v.value;
+
+              return (
+                <TableRow key={v.id}>
+                  <TableCell className="font-mono text-sm font-semibold">{v.key}</TableCell>
+                  <TableCell className="font-mono text-sm max-w-xs truncate">
+                    {displayVal}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                    {v.isSecret && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8"
+                        onClick={() => handleReveal(v.id)}
+                      >
+                        {isRevealed ? 'Hide' : 'Reveal'}
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-destructive hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(v.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Import Variables (.env)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Label className="text-xs text-muted-foreground">
+              Paste your .env file lines below. E.g. KEY=VALUE
+            </Label>
+            <textarea
+              className="w-full h-48 font-mono text-sm p-3 border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="DATABASE_URL=postgres://...&#10;PORT=3000&#10;# This is a comment&#10;DEBUG=true"
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+            />
+            <Button className="w-full" onClick={handleBulkImport} disabled={!bulkText.trim()}>
+              Import Variables
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

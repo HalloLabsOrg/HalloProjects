@@ -14,6 +14,7 @@ import { EnvironmentsModule } from './modules/environments/environments.module';
 import { DeploymentsModule } from './modules/deployments/deployments.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -38,6 +39,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     DeploymentsModule,
     AuditLogsModule,
     WebhooksModule,
+    MonitoringModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

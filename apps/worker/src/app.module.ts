@@ -6,6 +6,8 @@ import { EncryptionModule } from './encryption/encryption.module';
 import { DeploymentProcessor } from './processors/deployment.processor';
 import { RepositorySyncProcessor } from './processors/repository-sync.processor';
 import { WebhookProcessor } from './processors/webhook.processor';
+import { HealthCheckProcessor } from './processors/health-check.processor';
+import { HealthSchedulerService } from './scheduler/health-scheduler.service';
 import { QUEUE_NAMES } from '@hallo/shared';
 
 @Module({
@@ -21,10 +23,17 @@ import { QUEUE_NAMES } from '@hallo/shared';
       { name: QUEUE_NAMES.DEPLOYMENTS },
       { name: QUEUE_NAMES.REPOSITORY_SYNC },
       { name: QUEUE_NAMES.WEBHOOKS },
+      { name: QUEUE_NAMES.HEALTH_CHECKS },
     ),
     PrismaModule,
     EncryptionModule,
   ],
-  providers: [DeploymentProcessor, RepositorySyncProcessor, WebhookProcessor],
+  providers: [
+    DeploymentProcessor,
+    RepositorySyncProcessor,
+    WebhookProcessor,
+    HealthCheckProcessor,
+    HealthSchedulerService,
+  ],
 })
 export class AppModule {}

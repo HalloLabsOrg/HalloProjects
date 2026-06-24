@@ -11,6 +11,7 @@ import {
   Users,
   ScrollText,
   LogOut,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
@@ -28,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Repositories', href: '/repositories', icon: GitBranch },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
   { label: 'Deployments', href: '/deployments', icon: Rocket },
+  { label: 'Monitoring', href: '/monitoring', icon: Activity },
   { label: 'Users', href: '/users', icon: Users, adminOnly: true },
   { label: 'Audit Logs', href: '/audit-logs', icon: ScrollText, adminOnly: true },
 ];

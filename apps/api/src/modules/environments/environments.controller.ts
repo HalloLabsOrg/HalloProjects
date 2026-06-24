@@ -157,4 +157,24 @@ export class EnvironmentsController {
       req,
     });
   }
+
+  @Get(':id/variables/:varId/reveal')
+  @ApiOperation({ summary: 'Reveal a secret environment variable' })
+  async revealVariable(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+    @Param('varId') varId: string,
+    @CurrentUser() user: User,
+    @Req() req: Request,
+  ) {
+    const value = await this.environmentsService.revealVariable(projectId, id, varId);
+    await this.auditLogsService.log({
+      action: AuditAction.VARIABLE_REVEALED,
+      userId: user.id,
+      entityType: 'EnvironmentVariable',
+      entityId: varId,
+      req,
+    });
+    return { value };
+  }
 }
