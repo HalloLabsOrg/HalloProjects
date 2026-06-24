@@ -11,8 +11,8 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://docs.halloprojects.io',
-  baseUrl: '/',
+  url: 'https://HalloLabsOrg.github.io',
+  baseUrl: '/HalloProjects/',
 
   organizationName: 'HalloLabsOrg',
   projectName: 'HalloProjects',
