@@ -14,8 +14,8 @@ const config: Config = {
   url: 'https://docs.halloprojects.io',
   baseUrl: '/',
 
-  organizationName: 'hallolabs',
-  projectName: 'hallo-projects',
+  organizationName: 'HalloLabsOrg',
+  projectName: 'HalloProjects',
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -32,7 +32,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: 'https://github.com/hallolabs/hallo-projects/tree/main/apps/docs/',
+          editUrl: 'https://github.com/HalloLabsOrg/HalloProjects/tree/main/apps/docs/',
         },
         blog: false,
         theme: {
@@ -64,7 +64,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/hallolabs/hallo-projects',
+          href: 'https://github.com/HalloLabsOrg/HalloProjects',
           label: 'GitHub',
           position: 'right',
         },
@@ -96,7 +96,7 @@ const config: Config = {
             { label: 'Roadmap', to: '/docs/roadmap' },
             {
               label: 'GitHub',
-              href: 'https://github.com/hallolabs/hallo-projects',
+              href: 'https://github.com/HalloLabsOrg/HalloProjects',
             },
           ],
         },

@@ -20,8 +20,8 @@ docker --version # 24+
 
 ```bash
 # Clone & install dependencies
-git clone https://github.com/hallolabs/hallo-projects.git
-cd hallo-projects
+git clone https://github.com/HalloLabsOrg/HalloProjects.git
+cd HalloProjects
 pnpm install
 
 # Start infrastructure (postgres + redis only)

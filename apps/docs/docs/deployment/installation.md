@@ -22,7 +22,7 @@ Kami menyediakan script installer otomatis untuk memasang HALLO Projects di serv
 
 ```bash
 # 1. Unduh installer
-curl -fsSL -o install.sh https://raw.githubusercontent.com/hallolabs/hallo-projects/main/install.sh
+curl -fsSL -o install.sh https://raw.githubusercontent.com/HalloLabsOrg/HalloProjects/main/install.sh
 
 # 2. Jalankan installer (gunakan sudo jika diperlukan)
 chmod +x install.sh
@@ -44,8 +44,8 @@ Jika Anda ingin mengonfigurasi dan menjalankan container secara manual:
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/hallolabs/hallo-projects.git
-cd hallo-projects
+git clone https://github.com/HalloLabsOrg/HalloProjects.git
+cd HalloProjects
 
 # 2. Salin environment file
 cp .env.example .env

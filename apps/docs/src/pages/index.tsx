@@ -85,7 +85,7 @@ export default function Home(): React.JSX.Element {
             </Link>
             <a
               className="homepage-btn homepage-btn-secondary"
-              href="https://github.com/hallolabs/hallo-projects"
+              href="https://github.com/HalloLabsOrg/HalloProjects"
               target="_blank"
               rel="noopener noreferrer"
             >

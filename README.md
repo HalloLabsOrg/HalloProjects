@@ -9,22 +9,64 @@
 <h1 align="center">HALLO Projects</h1>
 
 <p align="center">
-  <strong>Platform-as-a-Service (PaaS) mandiri untuk mengelola, mendeploy, dan mengorkestrasi web service secara otomatis di server Anda sendiri.</strong>
+  <strong>Project Control Plane open-source & self-hosted untuk menyatukan seluruh aktivitas project dari repository hingga production dalam satu dashboard terpusat.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/hallolabs/hallo-projects/actions/workflows/ci.yml"><img src="https://github.com/hallolabs/hallo-projects/workflows/CI/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/HalloLabsOrg/HalloProjects/actions/workflows/ci.yml"><img src="https://github.com/HalloLabsOrg/HalloProjects/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
-  <a href="https://github.com/hallolabs/hallo-projects/releases"><img src="https://img.shields.io/github/v/release/hallolabs/hallo-projects" alt="Release" /></a>
+  <a href="https://github.com/HalloLabsOrg/HalloProjects/releases"><img src="https://img.shields.io/github/v/release/HalloLabsOrg/HalloProjects" alt="Release" /></a>
 </p>
 
 ---
 
 ## 🌟 Apa itu HALLO Projects?
 
-**HALLO Projects** adalah platform PaaS self-hosted yang dirancang untuk menjembatani kode repositori Anda langsung ke server production (VPS) secara instan. Platform ini menjadi solusi alternatif mandiri (seperti Heroku, Vercel, atau Coolify) yang memberikan kontrol penuh atas infrastruktur Anda tanpa biaya berlangganan bulanan yang mahal.
+**HALLO Projects** adalah **Project Control Plane** open-source yang dirancang agar dapat dijalankan secara mandiri (self-hosted). Tujuannya bukanlah untuk menggantikan platform deployment/PaaS (seperti Coolify) atau repositori (seperti GitHub), melainkan bertindak sebagai **lapisan kontrol (control plane)** terpusat yang menyatukan seluruh siklus hidup pengembangan aplikasi Anda.
 
-Dengan antarmuka dashboard yang bersih dan alur kerja berbasis Git, Anda dapat mengelola puluhan service, database, log, dan konfigurasi lingkungan dalam satu panel kontrol terpusat.
+Dengan antarmuka dashboard yang bersih dan alur kerja terpusat, Anda dapat mengelola repositori, melacak status deployment, mengonfigurasi variabel lingkungan yang aman (AES-256-GCM), mengakses logs, serta memantau kesehatan service (health check) tanpa perlu berpindah-pindah antar-layanan (seperti GitHub, Coolify, dan VPS).
+
+---
+
+## ⚖️ Perbandingan & Peran HalloProjects
+
+### Apa yang Membedakan HalloProjects dengan Produk Lain?
+Tidak seperti platform PaaS konvensional yang bertindak langsung sebagai *deployment engine* lokal, **HalloProjects** diposisikan sebagai **Control Plane / Orchestration Layer**. 
+
+Berikut adalah perbandingan karakteristik utama:
+
+| Karakteristik | HalloProjects | Coolify / CapRover | Vercel / Heroku |
+| :--- | :--- | :--- | :--- |
+| **Kategori** | Control Plane / Orchestrator | Deployment Engine (Self-Hosted) | Closed SaaS PaaS |
+| **Tujuan Utama** | Menyatukan repo & deployment engine dalam satu dashboard project terpadu | Membangun & menjalankan kontainer Docker langsung di server VPS | Hosting kode instan di server proprietary mereka |
+| **Model Integrasi** | Menghubungkan API pihak ketiga (GitHub, Coolify, dll.) | Bertindak sebagai host server target langsung | Mengelola infrastruktur cloud proprietary tertutup |
+| **Multi-Server Control** | Ya, satu kontrol panel terpusat untuk mengelola banyak instansi deployment | Terbatas pada server lokal atau cluster bentukan engine sendiri | Ya, dikelola penuh oleh provider SaaS |
+| **Fleksibilitas Infra** | Sangat Tinggi (Bisa menggunakan provider deployment apa saja melalui SDK) | Sedang (Terkunci pada manajemen Docker/Nixpacks lokal) | Rendah (Ketergantungan penuh pada platform SaaS) |
+
+---
+
+### Skema Peran HalloProjects
+HalloProjects bertindak sebagai jembatan orkestrasi antara Repositori Kode dan Deployment Engine. Pengguna tidak perlu mengakses VPS secara langsung; cukup berinteraksi melalui dashboard HalloProjects:
+
+```mermaid
+graph TD
+    User([User / Browser]) -->|Akses Dashboard / API| HP[HalloProjects Control Plane]
+    
+    subgraph Providers [Provider Integrations]
+        HP -->|GitHub API| GH[GitHub API / Webhook]
+        HP -->|Coolify API| CF[Coolify Deployment Provider]
+    end
+    
+    subgraph Infra [Infrastruktur VPS]
+        GH -->|Webhooks / Sync| HP
+        CF -->|Orkestrasi Container| VPS[Target VPS Server]
+    end
+
+    style HP fill:#4f46e5,stroke:#312e81,stroke-width:2px,color:#fff
+    style GH fill:#24292e,stroke:#1b1f23,stroke-width:1px,color:#fff
+    style CF fill:#f43f5e,stroke:#be123c,stroke-width:1px,color:#fff
+    style VPS fill:#0ea5e9,stroke:#0369a1,stroke-width:1px,color:#fff
+```
 
 ---
 
@@ -63,7 +105,7 @@ Kami menyediakan skrip installer satu baris untuk memasang HALLO Projects di ser
 Jalankan perintah berikut di server VPS Anda:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hallolabs/hallo-projects/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/HalloLabsOrg/HalloProjects/main/install.sh | bash
 ```
 
 Skrip ini akan secara otomatis:

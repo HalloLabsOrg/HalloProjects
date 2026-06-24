@@ -59,8 +59,8 @@ HALLO Projects menghilangkan friction tersebut.
 ## Quick Start
 
 ```bash
-git clone https://github.com/hallolabs/hallo-projects.git
-cd hallo-projects
+git clone https://github.com/HalloLabsOrg/HalloProjects.git
+cd HalloProjects
 cp .env.example .env
 # Edit .env dengan konfigurasi Anda
 docker compose up -d

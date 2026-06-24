@@ -17,8 +17,8 @@ HALLO Projects menggunakan struktur Monorepo berbasis **pnpm** dan **Turborepo**
 
 1. **Clone repository**:
    ```bash
-   git clone https://github.com/hallolabs/hallo-projects.git
-   cd hallo-projects
+   git clone https://github.com/HalloLabsOrg/HalloProjects.git
+   cd HalloProjects
    ```
 
 2. **Pasang dependensi**:
