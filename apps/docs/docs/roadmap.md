@@ -16,111 +16,111 @@ sidebar_position: 14
 
 ### 📦 Monorepo & Infrastructure Setup
 
-- [ ] Init monorepo dengan `pnpm workspaces` + Turborepo
-- [ ] Setup `apps/web` — Next.js 14 + TypeScript + Tailwind + shadcn/ui
-- [ ] Setup `apps/api` — NestJS + TypeScript + Prisma
-- [ ] Setup `apps/worker` — NestJS standalone + BullMQ
-- [ ] Setup `packages/shared`, `packages/sdk`, `packages/ui`
-- [ ] Setup `docker-compose.yml` production + `docker-compose.dev.yml`
-- [ ] Setup Caddyfile dengan reverse proxy config
-- [ ] Setup `turbo.json` pipeline
-- [ ] Setup ESLint + Prettier shared config
-- [ ] Setup `.env.example`
-- [ ] Setup GitHub Actions CI — lint + test + build
+- [x] Init monorepo dengan `pnpm workspaces` + Turborepo
+- [x] Setup `apps/web` — Next.js 14 + TypeScript + Tailwind + shadcn/ui
+- [x] Setup `apps/api` — NestJS + TypeScript + Prisma
+- [x] Setup `apps/worker` — NestJS standalone + BullMQ
+- [x] Setup `packages/shared`, `packages/sdk`, `packages/ui`
+- [x] Setup `docker-compose.yml` production + `docker-compose.dev.yml`
+- [x] Setup Caddyfile dengan reverse proxy config
+- [x] Setup `turbo.json` pipeline
+- [x] Setup ESLint + Prettier shared config
+- [x] Setup `.env.example`
+- [x] Setup GitHub Actions CI — lint + test + build
 
 ### 🗄️ Database
 
-- [ ] Tulis Prisma schema lengkap
-- [ ] Buat migration awal
-- [ ] Buat `PrismaService`
-- [ ] Buat seed script untuk admin user
-- [ ] Setup database encryption utility (AES-256-GCM)
+- [x] Tulis Prisma schema lengkap
+- [x] Buat migration awal
+- [x] Buat `PrismaService`
+- [x] Buat seed script untuk admin user
+- [x] Setup database encryption utility (AES-256-GCM)
 
 ### 🔐 Auth Module
 
-- [ ] `POST /auth/login`
-- [ ] `GET /auth/me`
-- [ ] `POST /auth/change-password`
-- [ ] `JwtAuthGuard`, `RolesGuard`, `@Roles()`, `@CurrentUser()`
-- [ ] Global exception filter untuk error response konsisten
+- [x] `POST /auth/login`
+- [x] `GET /auth/me`
+- [x] `POST /auth/change-password`
+- [x] `JwtAuthGuard`, `RolesGuard`, `@Roles()`, `@CurrentUser()`
+- [x] Global exception filter untuk error response konsisten
 
 ### 👥 Users Module
 
-- [ ] `GET /users`, `POST /users`, `GET /users/:id`
-- [ ] `PATCH /users/:id`, `PATCH /users/:id/disable`, `DELETE /users/:id`
+- [x] `GET /users`, `POST /users`, `GET /users/:id`
+- [x] `PATCH /users/:id`, `PATCH /users/:id/disable`, `DELETE /users/:id`
 
 ### 🔌 Providers Module
 
-- [ ] CRUD provider connections
-- [ ] `POST /providers/:id/test`
-- [ ] Enkripsi credentials + masking di response
+- [x] CRUD provider connections
+- [x] `POST /providers/:id/test`
+- [x] Enkripsi credentials + masking di response
 
 ### 🐙 GitHub Provider
 
-- [ ] `listRepositories()`, `getRepository()`, `getBranches()`, `getCommit()`
-- [ ] `registerWebhook()`, `validateWebhookSignature()`
-- [ ] `ProviderFactory`
+- [x] `listRepositories()`, `getRepository()`, `getBranches()`, `getCommit()`
+- [x] `registerWebhook()`, `validateWebhookSignature()`
+- [x] `ProviderFactory`
 
 ### 🚀 Coolify Provider
 
-- [ ] `listApplications()`, `deploy()`, `getStatus()`, `getLogs()`, `rollback()`
+- [x] `listApplications()`, `deploy()`, `getStatus()`, `getLogs()`, `rollback()`
 
 ### 📁 Repositories Module
 
-- [ ] `GET /repositories`, `GET /repositories/:id`
-- [ ] `GET /repositories/:id/branches`
-- [ ] `POST /repositories/sync`
-- [ ] Background job: `sync-repository`
+- [x] `GET /repositories`, `GET /repositories/:id`
+- [x] `GET /repositories/:id/branches`
+- [x] `POST /repositories/sync`
+- [x] Background job: `sync-repository`
 
 ### 📂 Projects Module
 
-- [ ] `POST /projects`, `GET /projects`, `GET /projects/:id`
-- [ ] `PATCH /projects/:id`, `POST /projects/:id/archive`, `DELETE /projects/:id`
-- [ ] Auto-generate slug dari name
+- [x] `POST /projects`, `GET /projects`, `GET /projects/:id`
+- [x] `PATCH /projects/:id`, `POST /projects/:id/archive`, `DELETE /projects/:id`
+- [x] Auto-generate slug dari name
 
 ### ⚙️ Services Module
 
-- [ ] CRUD services under project
-- [ ] Auto-create 3 default environments saat project dibuat
+- [x] CRUD services under project
+- [x] Auto-create 3 default environments saat project dibuat
 
 ### 🌍 Environments Module
 
-- [ ] CRUD environments
-- [ ] CRUD environment variables (dengan enkripsi)
+- [x] CRUD environments
+- [x] CRUD environment variables (dengan enkripsi)
 
 ### 🚢 Deployments Module
 
-- [ ] `POST /services/:serviceId/deploy`
-- [ ] `GET /deployments`, `GET /deployments/:id`
-- [ ] `POST /deployments/:id/cancel`
-- [ ] Background job: `deploy-service` processor
-- [ ] Status polling loop di worker
+- [x] `POST /services/:serviceId/deploy`
+- [x] `GET /deployments`, `GET /deployments/:id`
+- [x] `POST /deployments/:id/cancel`
+- [x] Background job: `deploy-service` processor
+- [x] Status polling loop di worker
 
 ### 📋 Audit Logs Module
 
-- [ ] `AuditLogService` + inject ke semua modules
-- [ ] `GET /audit-logs` dengan filter
+- [x] `AuditLogService` + inject ke semua modules
+- [x] `GET /audit-logs` dengan filter
 
 ### 🖥️ Frontend
 
-- [ ] Layout: sidebar + top nav + content area
-- [ ] Halaman Login
-- [ ] TanStack Query + Axios client + JWT interceptor
-- [ ] Zustand auth store
-- [ ] Dashboard, Projects, Repositories, Deployments pages
-- [ ] Providers, Users, Audit Logs pages
-- [ ] Empty states + Error states untuk semua halaman
+- [x] Layout: sidebar + top nav + content area
+- [x] Halaman Login
+- [x] TanStack Query + Axios client + JWT interceptor
+- [x] Zustand auth store
+- [x] Dashboard, Projects, Repositories, Deployments pages
+- [x] Providers, Users, Audit Logs pages
+- [x] Empty states + Error states untuk semua halaman
 
 ### ✅ v0.1 DoD
 
-- [ ] User bisa login dan logout
-- [ ] Admin bisa connect GitHub dan Coolify
-- [ ] User bisa sync repositories
-- [ ] User bisa create project dengan services
-- [ ] User bisa trigger manual deploy
-- [ ] Deployment status terupdate
-- [ ] Semua actions terekam di audit log
-- [ ] Bisa diinstall via `docker compose up -d`
+- [x] User bisa login dan logout
+- [x] Admin bisa connect GitHub dan Coolify
+- [x] User bisa sync repositories
+- [x] User bisa create project dengan services
+- [x] User bisa trigger manual deploy
+- [x] Deployment status terupdate
+- [x] Semua actions terekam di audit log
+- [x] Bisa diinstall via `docker compose up -d`
 
 ---
 
