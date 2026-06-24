@@ -26,7 +26,7 @@ COPY apps/api/package.json ./apps/api/package.json
 # Generate Prisma Client so @prisma/client exports enums (e.g. DeploymentStatus).
 # DATABASE_URL only needs to validate the schema format; a dummy value is fine for generate.
 RUN cd apps/api && DATABASE_URL="postgresql://x:x@localhost:5432/x" npx prisma@5.22.0 generate
-RUN pnpm --filter @hallo/worker run build
+RUN pnpm --filter @hallo/worker... build
 
 # Runner
 FROM node:20-alpine AS runner
@@ -42,6 +42,10 @@ COPY providers/coolify/package.json ./providers/coolify/
 
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/sdk/dist ./packages/sdk/dist
+COPY --from=builder /app/providers/github/dist ./providers/github/dist
+COPY --from=builder /app/providers/coolify/dist ./providers/coolify/dist
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
 
 # Copy prisma schema and package configuration to generate prisma client
