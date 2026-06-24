@@ -7,6 +7,9 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { Role, AuditAction, ProviderType, User } from '@prisma/client';
 import { Request } from 'express';
+import { EncryptionService } from '../../common/encryption/encryption.service';
+
+const SECRET_FIELDS = ['token', 'apiToken', 'webhookSecret', 'privateKey', 'clientSecret'];
 
 @ApiTags('Providers')
 @ApiBearerAuth()
@@ -17,7 +20,33 @@ export class GithubAppController {
     private readonly prisma: PrismaService,
     private readonly providersService: ProvidersService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly encryptionService: EncryptionService,
   ) {}
+
+  private encryptConfig(config: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(config)) {
+      result[key] =
+        SECRET_FIELDS.includes(key) && value ? this.encryptionService.encrypt(value) : value;
+    }
+    return result;
+  }
+
+  private decryptConfig(config: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(config)) {
+      if (SECRET_FIELDS.includes(key) && value) {
+        try {
+          result[key] = this.encryptionService.decrypt(value);
+        } catch {
+          result[key] = value;
+        }
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
 
   @Get('status')
   @ApiOperation({ summary: 'Check if root GitHub App is configured' })
@@ -36,7 +65,7 @@ export class GithubAppController {
       return { configured: false, appName: null, htmlUrl: null };
     }
 
-    const config = rootConnection.config as any;
+    const config = this.decryptConfig(rootConnection.config as any);
     return {
       configured: true,
       appName: rootConnection.name,
@@ -123,7 +152,7 @@ export class GithubAppController {
       },
     });
 
-    const configData = {
+    const configData = this.encryptConfig({
       authMethod: 'github_app',
       appId: String(appData.id),
       clientId: appData.client_id,
@@ -131,7 +160,7 @@ export class GithubAppController {
       webhookSecret: appData.webhook_secret,
       privateKey: appData.pem,
       htmlUrl: appData.html_url,
-    };
+    });
 
     let connection;
     if (existing) {
@@ -193,7 +222,7 @@ export class GithubAppController {
     }
 
     // 2. Fetch installation details from GitHub to find the owner name
-    const config = rootConnection.config as any;
+    const config = this.decryptConfig(rootConnection.config as any);
     const jwtToken = this.providersService.generateGithubAppJwt(config.appId, config.privateKey);
 
     const response = await fetch(`https://api.github.com/app/installations/${installationId}`, {
