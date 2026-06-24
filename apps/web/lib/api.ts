@@ -21,21 +21,23 @@ export const providersApi = {
   getGithubAppStatus: () =>
     apiClient
       .get<{
-        configured: boolean;
-        appName: string | null;
-        htmlUrl: string | null;
+        data: {
+          configured: boolean;
+          appName: string | null;
+          htmlUrl: string | null;
+        };
       }>('/api/providers/github-app/status')
-      .then((r) => r.data),
+      .then((r) => r.data.data),
   getGithubAppManifestPayload: (frontendUrl: string) =>
     apiClient
       .post<any>('/api/providers/github-app/manifest-payload', { frontendUrl })
-      .then((r) => r.data),
+      .then((r) => r.data.data),
   githubAppCallback: (code: string) =>
-    apiClient.post<any>('/api/providers/github-app/callback', { code }).then((r) => r.data),
+    apiClient.post<any>('/api/providers/github-app/callback', { code }).then((r) => r.data.data),
   githubAppInstall: (installationId: string) =>
     apiClient
       .post<any>('/api/providers/github-app/installations', { installationId })
-      .then((r) => r.data),
+      .then((r) => r.data.data),
 };
 
 // Repositories
