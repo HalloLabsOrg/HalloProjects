@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req, BadRequestException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProvidersService } from './providers.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,7 +7,6 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { Role, AuditAction, ProviderType, User } from '@prisma/client';
 import { Request } from 'express';
-import * as crypto from 'crypto';
 
 @ApiTags('Providers')
 @ApiBearerAuth()

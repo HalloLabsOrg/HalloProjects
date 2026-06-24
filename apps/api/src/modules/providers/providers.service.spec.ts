@@ -21,7 +21,6 @@ describe('ProvidersService', () => {
 
   // Generate a valid RSA key pair for testing JWT signing
   let privateKey: string;
-  let publicKey: string;
 
   beforeAll(() => {
     const pair = crypto.generateKeyPairSync('rsa', {
@@ -30,7 +29,6 @@ describe('ProvidersService', () => {
       privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
     });
     privateKey = pair.privateKey;
-    publicKey = pair.publicKey;
   });
 
   beforeEach(async () => {
