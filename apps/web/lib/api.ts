@@ -48,8 +48,8 @@ export const repositoriesApi = {
       .then((r) => r.data),
   listRemote: (providerId: string) =>
     apiClient
-      .get<any[]>('/api/repositories/remote', { params: { providerId } })
-      .then((r) => r.data),
+      .get<{ data: any[] }>('/api/repositories/remote', { params: { providerId } })
+      .then((r) => r.data.data),
   sync: (payload?: { providerId?: string; externalIds?: string[] }) =>
     apiClient
       .post(
@@ -60,6 +60,10 @@ export const repositoriesApi = {
       .then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
+  createBranch: (id: string, payload: { name: string; fromBranch: string }) =>
+    apiClient
+      .post<{ data: any }>(`/api/repositories/${id}/branches`, payload)
+      .then((r) => r.data.data),
   remove: (id: string) => apiClient.delete(`/api/repositories/${id}`).then((r) => r.data),
 };
 

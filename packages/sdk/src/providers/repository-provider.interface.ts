@@ -7,4 +7,5 @@ export interface RepositoryProvider {
   getCommit(repositoryExternalId: string, branch: string): Promise<Commit>;
   registerWebhook(repositoryExternalId: string, config: WebhookConfig): Promise<Webhook>;
   validateWebhookSignature(payload: Buffer, signature: string): boolean;
+  createBranch(repositoryExternalId: string, name: string, fromBranch: string): Promise<Branch>;
 }

@@ -26,6 +26,7 @@ export class ProvidersService {
   ) {}
 
   async findAll() {
+    await this.syncGithubAppInstallations();
     const connections = await this.prisma.providerConnection.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -115,6 +116,12 @@ export class ProvidersService {
       return { success: true, message: 'Connection successful' };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Connection failed';
+      await this.prisma.providerConnection
+        .update({
+          where: { id },
+          data: { lastTestedAt: new Date(), isActive: false },
+        })
+        .catch(() => {});
       return { success: false, message };
     }
   }
@@ -181,5 +188,101 @@ export class ProvidersService {
     }
 
     return { ...connection, config: maskedConfig };
+  }
+
+  private decryptConfig(config: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(config)) {
+      try {
+        result[key] = this.encryption.decrypt(value);
+      } catch {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  async syncGithubAppInstallations() {
+    const rootConnection = await this.prisma.providerConnection.findFirst({
+      where: {
+        type: ProviderType.GITHUB,
+        config: {
+          path: ['authMethod'],
+          equals: 'github_app',
+        },
+      },
+    });
+
+    if (!rootConnection) return;
+
+    try {
+      const config = this.decryptConfig(rootConnection.config as any);
+      const jwtToken = this.generateGithubAppJwt(config.appId, config.privateKey);
+
+      const response = await fetch('https://api.github.com/app/installations', {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'HALLO-Projects-Server',
+        },
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const installations = (await response.json()) as any[];
+
+      for (const inst of installations) {
+        const installationId = String(inst.id);
+        const owner = inst.account.login;
+
+        const existingInst = await this.prisma.providerConnection.findFirst({
+          where: {
+            type: ProviderType.GITHUB,
+            config: {
+              path: ['installationId'],
+              equals: installationId,
+            },
+          },
+        });
+
+        const instConfig = {
+          authMethod: 'github_app_installation',
+          installationId,
+          appConnectionId: rootConnection.id,
+          owner,
+          avatarUrl: inst.account.avatar_url,
+        };
+
+        if (existingInst) {
+          const existingConfig = existingInst.config as any;
+          if (
+            existingConfig.owner !== owner ||
+            existingConfig.appConnectionId !== rootConnection.id ||
+            existingConfig.avatarUrl !== inst.account.avatar_url
+          ) {
+            await this.prisma.providerConnection.update({
+              where: { id: existingInst.id },
+              data: {
+                name: `GitHub (${owner})`,
+                config: instConfig,
+              },
+            });
+          }
+        } else {
+          await this.prisma.providerConnection.create({
+            data: {
+              type: ProviderType.GITHUB,
+              name: `GitHub (${owner})`,
+              config: instConfig,
+              isActive: true,
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to auto-sync GitHub App installations:', err);
+    }
   }
 }

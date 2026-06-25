@@ -44,6 +44,12 @@ export class RepositoriesController {
     return this.repositoriesService.getBranches(id);
   }
 
+  @Post(':id/branches')
+  @ApiOperation({ summary: 'Create a new branch in the repository' })
+  createBranch(@Param('id') id: string, @Body() body: { name: string; fromBranch: string }) {
+    return this.repositoriesService.createBranch(id, body.name, body.fromBranch);
+  }
+
   @Post('sync')
   @ApiOperation({ summary: 'Sync repositories from all active GitHub providers' })
   @ApiQuery({ name: 'providerId', required: false })

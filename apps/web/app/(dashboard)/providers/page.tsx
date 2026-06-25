@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Plug, Trash2, CheckCircle, Loader2, Shield } from 'lucide-react';
+import { Plug, Trash2, CheckCircle, Loader2, Shield, Github } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProvidersPage() {
@@ -31,14 +31,42 @@ export default function ProvidersPage() {
     queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.data === 'github-connected' || event.data === 'github-app-connected') {
+      const isStringMatch =
+        event.data === 'github-connected' || event.data === 'github-app-connected';
+      const isObjectMatch =
+        event.data &&
+        typeof event.data === 'object' &&
+        (event.data.type === 'github-connected' || event.data.type === 'github-app-connected');
+
+      if (isStringMatch || isObjectMatch) {
         queryClient.invalidateQueries({ queryKey: ['providers'] });
         queryClient.invalidateQueries({ queryKey: ['github-app-status'] });
+        setOpen(false);
+
+        const type = isObjectMatch ? event.data.type : event.data;
+        const owner = isObjectMatch ? event.data.owner : null;
+        const appName = isObjectMatch ? event.data.appName : null;
+
+        if (type === 'github-connected') {
+          toast({
+            title: 'GitHub Connected',
+            description: owner
+              ? `Successfully linked account: ${owner}`
+              : 'Your GitHub account has been successfully linked!',
+          });
+        } else if (type === 'github-app-connected') {
+          toast({
+            title: 'GitHub App Configured',
+            description: appName
+              ? `Successfully registered app: ${appName}`
+              : 'Your self-hosted GitHub App has been registered successfully!',
+          });
+        }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [queryClient]);
+  }, [queryClient, toast]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['providers'],
@@ -65,10 +93,20 @@ export default function ProvidersPage() {
     mutationFn: (id: string) =>
       providersApi.test(id) as Promise<{ success: boolean; message: string }>,
     onSuccess: (result: any) => {
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
       toast({
         title: result.success ? 'Connection successful' : 'Connection failed',
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
+      });
+    },
+    onError: (err: any) => {
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to test connection';
+      toast({
+        title: 'Connection failed',
+        description: msg,
+        variant: 'destructive',
       });
     },
   });
@@ -320,16 +358,46 @@ export default function ProvidersPage() {
               <Card key={provider.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{provider.name}</CardTitle>
+                    <div className="flex items-center space-x-2.5">
+                      {provider.config?.avatarUrl ? (
+                        <img
+                          src={provider.config.avatarUrl}
+                          alt={provider.name}
+                          className="h-8 w-8 rounded-full border border-border"
+                        />
+                      ) : provider.type === 'GITHUB' ? (
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                          <Github className="h-4 w-4 text-foreground" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                          <Plug className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <CardTitle className="text-base">{provider.name}</CardTitle>
+                    </div>
                     <Badge variant={provider.isActive ? 'default' : 'secondary'}>
                       {authMethod === 'github_app_installation' ? 'GitHub App' : provider.type}
                     </Badge>
                   </div>
                   <CardDescription>
                     {provider.lastTestedAt
-                      ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleDateString()}`
+                      ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleString()}`
                       : 'Not tested yet'}
                   </CardDescription>
+                  <div className="flex items-center space-x-2 mt-1.5">
+                    {provider.isActive ? (
+                      <span className="flex items-center text-xs text-green-500 font-medium">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-xs text-destructive font-medium">
+                        <span className="h-1.5 w-1.5 rounded-full bg-destructive mr-1.5" />
+                        Connection Failed
+                      </span>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="flex gap-2">
                   <Button
@@ -338,12 +406,17 @@ export default function ProvidersPage() {
                     onClick={() => testMutation.mutate(provider.id)}
                     disabled={testMutation.isPending}
                   >
-                    {testMutation.isPending ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                    {testMutation.isPending && testMutation.variables === provider.id ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Testing...
+                      </>
                     ) : (
-                      <CheckCircle className="h-3 w-3 mr-1" />
+                      <>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Test
+                      </>
                     )}
-                    Test
                   </Button>
                   <Button
                     size="sm"

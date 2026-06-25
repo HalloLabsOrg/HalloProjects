@@ -251,6 +251,7 @@ export class GithubAppController {
     };
 
     const owner = installationData.account.login;
+    const avatarUrl = installationData.account.avatar_url;
 
     // 3. Create or update installation ProviderConnection
     const existingInst = await this.prisma.providerConnection.findFirst({
@@ -268,6 +269,7 @@ export class GithubAppController {
       installationId: String(installationId),
       appConnectionId: rootConnection.id,
       owner,
+      avatarUrl,
     };
 
     let connection;

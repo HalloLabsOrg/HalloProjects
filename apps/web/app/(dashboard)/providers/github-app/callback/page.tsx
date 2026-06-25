@@ -30,7 +30,7 @@ function CallbackContent() {
         description: `Registered app: ${data.appName}`,
       });
       if (typeof window !== 'undefined' && window.opener) {
-        window.opener.postMessage('github-app-connected', '*');
+        window.opener.postMessage({ type: 'github-app-connected', appName: data.appName }, '*');
         window.close();
       } else {
         router.push('/providers');
@@ -58,7 +58,7 @@ function CallbackContent() {
         description: `Connected organization/user: ${data.owner}`,
       });
       if (typeof window !== 'undefined' && window.opener) {
-        window.opener.postMessage('github-connected', '*');
+        window.opener.postMessage({ type: 'github-connected', owner: data.owner }, '*');
         window.close();
       } else {
         router.push('/providers');

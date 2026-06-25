@@ -68,6 +68,12 @@ export class RepositoriesService {
     return provider.getBranches(repo.externalId);
   }
 
+  async createBranch(id: string, name: string, fromBranch: string) {
+    const repo = await this.findOne(id);
+    const provider = await this.providerFactory.getRepositoryProvider(repo.providerId);
+    return provider.createBranch(repo.externalId, name, fromBranch);
+  }
+
   async getRemoteRepositories(providerId: string): Promise<any[]> {
     const connection = await this.prisma.providerConnection.findUnique({
       where: { id: providerId, type: 'GITHUB', isActive: true },

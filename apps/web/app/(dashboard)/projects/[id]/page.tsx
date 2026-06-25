@@ -79,6 +79,9 @@ export default function ProjectDetailPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: '', repositoryId: '', branch: 'main' });
+  const [createNewBranch, setCreateNewBranch] = useState(false);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [baseBranch, setBaseBranch] = useState('main');
 
   // Project Edit / Delete states
   const [projectEditOpen, setProjectEditOpen] = useState(false);
@@ -157,16 +160,54 @@ export default function ProjectDetailPage() {
     enabled: serviceOpen,
   });
 
+  const { data: branches, isLoading: isLoadingBranches } = useQuery({
+    queryKey: ['repository-branches', serviceForm.repositoryId],
+    queryFn: () => repositoriesApi.branches(serviceForm.repositoryId),
+    enabled: !!serviceForm.repositoryId && serviceOpen,
+  });
+
+  const createBranchMutation = useMutation({
+    mutationFn: (payload: { name: string; fromBranch: string }) =>
+      repositoriesApi.createBranch(serviceForm.repositoryId, payload),
+  });
+
   const createServiceMutation = useMutation({
-    mutationFn: () => servicesApi.create(id, serviceForm),
+    mutationFn: (form: typeof serviceForm) => servicesApi.create(id, form),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services', id] });
       setServiceOpen(false);
       setServiceForm({ name: '', repositoryId: '', branch: 'main' });
+      setCreateNewBranch(false);
+      setNewBranchName('');
       toast({ title: 'Service created' });
     },
     onError: () => toast({ title: 'Failed to create service', variant: 'destructive' }),
   });
+
+  const handleCreateService = async () => {
+    try {
+      let targetBranch = serviceForm.branch;
+      if (createNewBranch) {
+        const cleanedName = newBranchName.trim();
+        if (!cleanedName) {
+          toast({ title: 'Branch name is required', variant: 'destructive' });
+          return;
+        }
+        await createBranchMutation.mutateAsync({
+          name: cleanedName,
+          fromBranch: baseBranch,
+        });
+        targetBranch = cleanedName;
+      }
+      await createServiceMutation.mutateAsync({
+        ...serviceForm,
+        branch: targetBranch,
+      });
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to create service';
+      toast({ title: errMsg, variant: 'destructive' });
+    }
+  };
 
   const updateProjectMutation = useMutation({
     mutationFn: () => projectsApi.update(id, projectEditForm),
@@ -325,9 +366,18 @@ export default function ProjectDetailPage() {
                     <select
                       className="w-full rounded-md border px-3 py-2 text-sm bg-background"
                       value={serviceForm.repositoryId}
-                      onChange={(e) =>
-                        setServiceForm((f) => ({ ...f, repositoryId: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        const repoId = e.target.value;
+                        const selectedRepo = repos.find((r: any) => r.id === repoId);
+                        setServiceForm((f) => ({
+                          ...f,
+                          repositoryId: repoId,
+                          branch: selectedRepo?.defaultBranch || 'main',
+                        }));
+                        if (selectedRepo) {
+                          setBaseBranch(selectedRepo.defaultBranch || 'main');
+                        }
+                      }}
                     >
                       <option value="">Select repository...</option>
                       {repos.map((r: any) => (
@@ -338,23 +388,95 @@ export default function ProjectDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <Label>Branch</Label>
-                    <Input
-                      placeholder="main"
-                      value={serviceForm.branch}
-                      onChange={(e) => setServiceForm((f) => ({ ...f, branch: e.target.value }))}
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label>Branch</Label>
+                      {serviceForm.repositoryId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = !createNewBranch;
+                            setCreateNewBranch(nextVal);
+                            if (nextVal) {
+                              setNewBranchName('');
+                              const selectedRepo = repos.find(
+                                (r: any) => r.id === serviceForm.repositoryId,
+                              );
+                              setBaseBranch(selectedRepo?.defaultBranch || 'main');
+                            }
+                          }}
+                          className="text-xs text-primary hover:underline font-medium"
+                        >
+                          {createNewBranch ? 'Choose existing branch' : 'Create new branch'}
+                        </button>
+                      )}
+                    </div>
+
+                    {!createNewBranch ? (
+                      <select
+                        className="w-full rounded-md border px-3 py-2 text-sm bg-background disabled:opacity-50"
+                        value={serviceForm.branch}
+                        onChange={(e) => setServiceForm((f) => ({ ...f, branch: e.target.value }))}
+                        disabled={!serviceForm.repositoryId || isLoadingBranches}
+                      >
+                        {!serviceForm.repositoryId && (
+                          <option value="">Select repository first...</option>
+                        )}
+                        {isLoadingBranches && <option value="">Loading branches...</option>}
+                        {!isLoadingBranches &&
+                          (branches ?? []).map((b: any) => (
+                            <option key={b.name} value={b.name}>
+                              {b.name} {b.isDefault ? '(default)' : ''}
+                            </option>
+                          ))}
+                      </select>
+                    ) : (
+                      <div className="space-y-2 border p-3 rounded-md bg-muted/40 mt-1">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">New Branch Name</Label>
+                          <Input
+                            placeholder="feature/my-new-branch"
+                            value={newBranchName}
+                            onChange={(e) => setNewBranchName(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Base Branch</Label>
+                          <select
+                            className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                            value={baseBranch}
+                            onChange={(e) => setBaseBranch(e.target.value)}
+                          >
+                            {(branches ?? []).map((b: any) => (
+                              <option key={b.name} value={b.name}>
+                                {b.name} {b.isDefault ? '(default)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <Button
                     className="w-full"
-                    onClick={() => createServiceMutation.mutate()}
+                    onClick={handleCreateService}
                     disabled={
                       createServiceMutation.isPending ||
+                      createBranchMutation.isPending ||
                       !serviceForm.name ||
-                      !serviceForm.repositoryId
+                      !serviceForm.repositoryId ||
+                      (createNewBranch ? !newBranchName.trim() : !serviceForm.branch)
                     }
                   >
-                    Create Service
+                    {createServiceMutation.isPending || createBranchMutation.isPending ? (
+                      <span className="flex items-center gap-2 justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {createBranchMutation.isPending
+                          ? 'Creating branch...'
+                          : 'Creating service...'}
+                      </span>
+                    ) : (
+                      'Create Service'
+                    )}
                   </Button>
                 </div>
               </DialogContent>

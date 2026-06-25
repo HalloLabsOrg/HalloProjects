@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/empty-state';
 import { TableSkeleton } from '@/components/shared/table-skeleton';
-import { GitBranch, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { GitBranch, Loader2, Plus, Search, Trash2, Plug, Shield, Github } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function RepositoriesPage() {
@@ -60,6 +60,13 @@ export default function RepositoriesPage() {
   const { data: providersData } = useQuery({
     queryKey: ['providers'],
     queryFn: providersApi.list,
+    enabled: importOpen,
+  });
+
+  // Query GitHub App status to see if configured at root level
+  const { data: appStatus } = useQuery({
+    queryKey: ['github-app-status'],
+    queryFn: providersApi.getGithubAppStatus,
     enabled: importOpen,
   });
 
@@ -168,144 +175,205 @@ export default function RepositoriesPage() {
             </DialogHeader>
 
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">GitHub Account</label>
-                <Select
-                  value={selectedProviderId}
-                  onValueChange={(val) => {
-                    setSelectedProviderId(val);
-                    setSelectedExternalIds([]);
-                    setSearchRemote('');
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a connected account..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {githubProviders.map((provider: any) => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedProviderId && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Select Repositories</label>
-                    {remoteRepos && remoteRepos.length > 0 && (
-                      <button
+              {githubProviders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg bg-muted/30 text-center space-y-4">
+                  <div className="p-3 bg-primary/10 rounded-full text-primary">
+                    <Plug className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-semibold text-sm">No connected GitHub accounts</p>
+                    <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                      {appStatus?.configured
+                        ? `You have configured the GitHub App "${appStatus.appName}". Please install/link it to your GitHub account to sync repositories.`
+                        : 'Connect a GitHub account (via GitHub App or Personal Access Token) to start importing your repositories.'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col w-full gap-2 pt-2">
+                    {appStatus?.configured && appStatus.htmlUrl && (
+                      <Button
                         type="button"
-                        onClick={toggleSelectAll}
-                        className="text-xs text-primary hover:underline font-medium"
+                        className="w-full flex items-center justify-center gap-2"
+                        onClick={() => {
+                          window.open(`${appStatus.htmlUrl}/installations/new`, '_blank');
+                        }}
                       >
-                        {selectedExternalIds.length ===
-                        remoteRepos.filter((r: any) => !localExternalIds.has(r.externalId)).length
-                          ? 'Deselect All'
-                          : 'Select All'}
-                      </button>
+                        <Shield className="h-4 w-4" />
+                        Install GitHub App
+                      </Button>
                     )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setImportOpen(false);
+                        window.location.href = '/providers';
+                      }}
+                    >
+                      Go to Providers page
+                    </Button>
                   </div>
-
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search remote repositories..."
-                      value={searchRemote}
-                      onChange={(e) => setSearchRemote(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-
-                  {isLoadingRemote ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : filteredRemoteRepos.length === 0 ? (
-                    <div className="text-center py-6 text-sm text-muted-foreground border border-dashed rounded-md">
-                      No repositories found.
-                    </div>
-                  ) : (
-                    <div className="max-h-60 overflow-y-auto border rounded-md divide-y bg-background">
-                      {filteredRemoteRepos.map((repo: any) => {
-                        const isImported = localExternalIds.has(repo.externalId);
-                        return (
-                          <div
-                            key={repo.externalId}
-                            className={`flex items-center justify-between p-2.5 text-sm ${
-                              isImported ? 'bg-muted/40 opacity-70' : 'hover:bg-accent/40'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                id={`repo-${repo.externalId}`}
-                                disabled={isImported}
-                                checked={
-                                  isImported || selectedExternalIds.includes(repo.externalId)
-                                }
-                                onChange={() => handleToggleRepo(repo.externalId)}
-                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                              />
-                              <label
-                                htmlFor={`repo-${repo.externalId}`}
-                                className={`font-medium select-none ${isImported ? 'text-muted-foreground cursor-not-allowed' : 'cursor-pointer'}`}
-                              >
-                                {repo.fullName}
-                              </label>
-                            </div>
-                            <div className="flex items-center space-x-1.5">
-                              {isImported ? (
-                                <Badge variant="secondary" className="text-xs">
-                                  Imported
-                                </Badge>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">GitHub Account</label>
+                    <Select
+                      value={selectedProviderId}
+                      onValueChange={(val) => {
+                        setSelectedProviderId(val);
+                        setSelectedExternalIds([]);
+                        setSearchRemote('');
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a connected account..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {githubProviders.map((provider: any) => (
+                          <SelectItem key={provider.id} value={provider.id}>
+                            <div className="flex items-center space-x-2">
+                              {provider.config?.avatarUrl ? (
+                                <img
+                                  src={provider.config.avatarUrl}
+                                  alt={provider.name}
+                                  className="h-5 w-5 rounded-full border border-border"
+                                />
                               ) : (
-                                <Badge
-                                  variant={repo.visibility === 'private' ? 'secondary' : 'outline'}
-                                  className="text-xs capitalize"
-                                >
-                                  {repo.visibility}
-                                </Badge>
+                                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-muted">
+                                  <Github className="h-3 w-3 text-foreground" />
+                                </div>
                               )}
+                              <span>{provider.name}</span>
                             </div>
-                          </div>
-                        );
-                      })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedProviderId && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Select Repositories</label>
+                        {remoteRepos && remoteRepos.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={toggleSelectAll}
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
+                            {selectedExternalIds.length ===
+                            remoteRepos.filter((r: any) => !localExternalIds.has(r.externalId))
+                              .length
+                              ? 'Deselect All'
+                              : 'Select All'}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search remote repositories..."
+                          value={searchRemote}
+                          onChange={(e) => setSearchRemote(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+
+                      {isLoadingRemote ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : filteredRemoteRepos.length === 0 ? (
+                        <div className="text-center py-6 text-sm text-muted-foreground border border-dashed rounded-md">
+                          No repositories found.
+                        </div>
+                      ) : (
+                        <div className="max-h-60 overflow-y-auto border rounded-md divide-y bg-background">
+                          {filteredRemoteRepos.map((repo: any) => {
+                            const isImported = localExternalIds.has(repo.externalId);
+                            return (
+                              <div
+                                key={repo.externalId}
+                                className={`flex items-center justify-between p-2.5 text-sm ${
+                                  isImported ? 'bg-muted/40 opacity-70' : 'hover:bg-accent/40'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`repo-${repo.externalId}`}
+                                    disabled={isImported}
+                                    checked={
+                                      isImported || selectedExternalIds.includes(repo.externalId)
+                                    }
+                                    onChange={() => handleToggleRepo(repo.externalId)}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                  />
+                                  <label
+                                    htmlFor={`repo-${repo.externalId}`}
+                                    className={`font-medium select-none ${isImported ? 'text-muted-foreground cursor-not-allowed' : 'cursor-pointer'}`}
+                                  >
+                                    {repo.fullName}
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-1.5">
+                                  {isImported ? (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Imported
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant={
+                                        repo.visibility === 'private' ? 'secondary' : 'outline'
+                                      }
+                                      className="text-xs capitalize"
+                                    >
+                                      {repo.visibility}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setImportOpen(false);
-                  setSelectedProviderId('');
-                  setSelectedExternalIds([]);
-                  setSearchRemote('');
-                }}
-                disabled={importMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => importMutation.mutate()}
-                disabled={selectedExternalIds.length === 0 || importMutation.isPending}
-              >
-                {importMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Importing...
-                  </>
-                ) : (
-                  `Import Selected (${selectedExternalIds.length})`
-                )}
-              </Button>
-            </DialogFooter>
+            {githubProviders.length > 0 && (
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImportOpen(false);
+                    setSelectedProviderId('');
+                    setSelectedExternalIds([]);
+                    setSearchRemote('');
+                  }}
+                  disabled={importMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => importMutation.mutate()}
+                  disabled={selectedExternalIds.length === 0 || importMutation.isPending}
+                >
+                  {importMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    `Import Selected (${selectedExternalIds.length})`
+                  )}
+                </Button>
+              </DialogFooter>
+            )}
           </DialogContent>
         </Dialog>
       </div>

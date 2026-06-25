@@ -138,6 +138,36 @@ export class GithubProvider implements RepositoryProvider {
     return timingSafeEqual(actualBuf, expectedBuf);
   }
 
+  async createBranch(
+    repositoryExternalId: string,
+    name: string,
+    fromBranch: string,
+  ): Promise<Branch> {
+    const [owner, repo] = repositoryExternalId.split('/');
+
+    // 1. Get SHA of the base branch
+    const { data: refData } = await this.octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${fromBranch}`,
+    });
+    const sha = refData.object.sha;
+
+    // 2. Create new branch ref
+    await this.octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${name}`,
+      sha,
+    });
+
+    return {
+      name,
+      sha,
+      isDefault: false,
+    };
+  }
+
   private mapRepo(repo: {
     id: number;
     full_name: string;
