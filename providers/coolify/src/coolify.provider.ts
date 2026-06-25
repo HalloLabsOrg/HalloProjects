@@ -56,7 +56,7 @@ export class CoolifyProvider implements DeploymentProvider {
     const firstDeployment = data.deployments?.[0];
     if (!firstDeployment || !firstDeployment.deployment_uuid) {
       throw new Error(
-        firstDeployment?.message || 'Gagal memulai deployment di Coolify: UUID tidak didapatkan'
+        firstDeployment?.message || 'Gagal memulai deployment di Coolify: UUID tidak didapatkan',
       );
     }
 
@@ -69,9 +69,7 @@ export class CoolifyProvider implements DeploymentProvider {
   }
 
   async getLogs(externalId: string): Promise<string> {
-    const { data } = await this.client.get<CoolifyDeployment>(
-      `/api/v1/deployments/${externalId}`,
-    );
+    const { data } = await this.client.get<CoolifyDeployment>(`/api/v1/deployments/${externalId}`);
     return data.logs ?? '';
   }
 

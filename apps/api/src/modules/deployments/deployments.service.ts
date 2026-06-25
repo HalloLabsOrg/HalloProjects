@@ -211,9 +211,9 @@ export class DeploymentsService {
           });
 
           const isTerminal =
-              deployment.status === DeploymentStatus.SUCCESS ||
-              deployment.status === DeploymentStatus.FAILED ||
-              deployment.status === DeploymentStatus.CANCELLED;
+            deployment.status === DeploymentStatus.SUCCESS ||
+            deployment.status === DeploymentStatus.FAILED ||
+            deployment.status === DeploymentStatus.CANCELLED;
 
           if (isTerminal) {
             subscriber.complete();
@@ -282,7 +282,9 @@ function parseCoolifyLogs(rawLogs: string): string {
         return lines.join('\n');
       }
     }
-  } catch {}
+  } catch {
+    // Ignore and fallback to rawLogs
+  }
 
   return rawLogs;
 }

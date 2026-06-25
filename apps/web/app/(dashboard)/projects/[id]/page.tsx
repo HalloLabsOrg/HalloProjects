@@ -48,7 +48,6 @@ import {
   Search,
   Edit,
   Trash2,
-  Settings,
   AlertCircle,
   FolderTree,
   Folder,
@@ -328,9 +327,8 @@ export default function ProjectDetailPage() {
         // Match if filename contains 'docker' or 'dockerfile'
         const hasDocker = fileName.includes('docker');
         // Exclude files ending with common config/script/documentation/asset extensions
-        const isCommonExtension = /\.(sh|ya?ml|json|jsx?|tsx?|md|png|jpe?g|gif|svg|css|html|txt)$/.test(
-          fileName
-        );
+        const isCommonExtension =
+          /\.(sh|ya?ml|json|jsx?|tsx?|md|png|jpe?g|gif|svg|css|html|txt)$/.test(fileName);
         return hasDocker && !isCommonExtension;
       })
       .map((f: any) => f.path);
@@ -350,7 +348,9 @@ export default function ProjectDetailPage() {
     if (coolifyBuildPack === 'dockerfile') {
       if (detectedDockerfiles.length > 0) {
         const firstDockerfile = detectedDockerfiles[0];
-        setCoolifyDockfilePath(firstDockerfile.startsWith('/') ? firstDockerfile : '/' + firstDockerfile);
+        setCoolifyDockfilePath(
+          firstDockerfile.startsWith('/') ? firstDockerfile : '/' + firstDockerfile,
+        );
         setCoolifyBaseDirectory('/');
       } else {
         setCoolifyDockfilePath('/Dockerfile');
@@ -918,15 +918,6 @@ export default function ProjectDetailPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                        onClick={() => openDeployModal(svc)}
-                        title="Configure Deploy Settings"
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
                         className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => {
                           setServiceToDelete(svc);
@@ -1487,7 +1478,11 @@ export default function ProjectDetailPage() {
                               placeholder="e.g. halloprojects-web"
                             />
                             <p className="text-[9px] text-muted-foreground leading-tight">
-                              Nama unik aplikasi Anda di Coolify. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded">hallo-projects-web</code>.
+                              Nama unik aplikasi Anda di Coolify. Contoh:{' '}
+                              <code className="bg-muted dark:bg-zinc-800 px-1 rounded">
+                                hallo-projects-web
+                              </code>
+                              .
                             </p>
                           </div>
 
@@ -1616,7 +1611,8 @@ export default function ProjectDetailPage() {
                                 </select>
                               )}
                               <p className="text-[9px] text-muted-foreground leading-tight">
-                                Wadah project dan environment di Coolify untuk mengelompokkan resource.
+                                Wadah project dan environment di Coolify untuk mengelompokkan
+                                resource.
                               </p>
                             </div>
                           </div>
@@ -1638,7 +1634,8 @@ export default function ProjectDetailPage() {
                               ))}
                             </select>
                             <p className="text-[9px] text-muted-foreground leading-tight">
-                              Gunakan koneksi GitHub App jika repositori Anda bersifat <strong>Private</strong>.
+                              Gunakan koneksi GitHub App jika repositori Anda bersifat{' '}
+                              <strong>Private</strong>.
                             </p>
                           </div>
 
@@ -1649,9 +1646,7 @@ export default function ProjectDetailPage() {
                                 {treeFiles && treeFiles.length > 0 && (
                                   <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-bold uppercase">
                                     Rekomendasi:{' '}
-                                    {detectedDockerfiles.length > 0
-                                      ? 'Dockerfile'
-                                      : 'Nixpacks'}
+                                    {detectedDockerfiles.length > 0 ? 'Dockerfile' : 'Nixpacks'}
                                   </span>
                                 )}
                               </Label>
@@ -1665,7 +1660,8 @@ export default function ProjectDetailPage() {
                                 <option value="dockerimage">Docker Image</option>
                               </select>
                               <p className="text-[9px] text-muted-foreground leading-tight">
-                                <strong>Nixpacks</strong> (deteksi otomatis) atau <strong>Dockerfile</strong> (file kustom).
+                                <strong>Nixpacks</strong> (deteksi otomatis) atau{' '}
+                                <strong>Dockerfile</strong> (file kustom).
                               </p>
                             </div>
 
@@ -1681,7 +1677,10 @@ export default function ProjectDetailPage() {
                                 onChange={(e) => setCoolifyExposedPort(e.target.value)}
                               />
                               <p className="text-[9px] text-muted-foreground leading-tight">
-                                Port internal container. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded">3000</code> (Next.js) atau <code className="bg-muted dark:bg-zinc-800 px-1 rounded">80</code>.
+                                Port internal container. Contoh:{' '}
+                                <code className="bg-muted dark:bg-zinc-800 px-1 rounded">3000</code>{' '}
+                                (Next.js) atau{' '}
+                                <code className="bg-muted dark:bg-zinc-800 px-1 rounded">80</code>.
                               </p>
                             </div>
                           </div>
@@ -1701,7 +1700,11 @@ export default function ProjectDetailPage() {
                                     onChange={(e) => setCoolifyDockfilePath(e.target.value)}
                                   />
                                   <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">
-                                    Lokasi Dockerfile dari root. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">/apps/web/Dockerfile</code>.
+                                    Lokasi Dockerfile dari root. Contoh:{' '}
+                                    <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">
+                                      /apps/web/Dockerfile
+                                    </code>
+                                    .
                                   </p>
                                 </div>
 
@@ -1717,7 +1720,11 @@ export default function ProjectDetailPage() {
                                     onChange={(e) => setCoolifyBaseDirectory(e.target.value)}
                                   />
                                   <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">
-                                    Build context directory. Gunakan <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">/</code> jika monorepo.
+                                    Build context directory. Gunakan{' '}
+                                    <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">
+                                      /
+                                    </code>{' '}
+                                    jika monorepo.
                                   </p>
                                 </div>
                               </div>
@@ -1729,7 +1736,9 @@ export default function ProjectDetailPage() {
                                   </span>
                                   <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
                                     {detectedDockerfiles.map((path: string) => {
-                                      const formattedPath = path.startsWith('/') ? path : '/' + path;
+                                      const formattedPath = path.startsWith('/')
+                                        ? path
+                                        : '/' + path;
                                       const isSelected = coolifyDockfilePath === formattedPath;
                                       return (
                                         <button

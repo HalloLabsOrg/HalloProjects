@@ -88,7 +88,7 @@ export class DeploymentProcessor {
             applicationUuid = matchedApp.uuid;
           } else {
             throw new Error(
-              `Aplikasi Coolify tidak ditemukan. Silakan buat aplikasi baru terlebih dahulu dengan mencentang 'Buat Aplikasi Baru secara Otomatis' di panel deploy.`
+              `Aplikasi Coolify tidak ditemukan. Silakan buat aplikasi baru terlebih dahulu dengan mencentang 'Buat Aplikasi Baru secara Otomatis' di panel deploy.`,
             );
           }
         } catch (err) {

@@ -7,7 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { XCircle, RefreshCw, Copy, Check, CheckCircle2, PlayCircle, Loader2, Search, Terminal, ArrowDown, Clock } from 'lucide-react';
+import {
+  XCircle,
+  RefreshCw,
+  Copy,
+  Check,
+  CheckCircle2,
+  PlayCircle,
+  Loader2,
+  Search,
+  Terminal,
+  ArrowDown,
+  Clock,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useMemo } from 'react';
 
@@ -20,7 +32,14 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 
   DEPLOYING: 'secondary',
 };
 
-const STATUS_CONFIG: Record<string, { label: string, variant: 'default' | 'secondary' | 'destructive' | 'outline', icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    icon: React.ReactNode;
+  }
+> = {
   SUCCESS: {
     label: 'Success',
     variant: 'default',
@@ -176,11 +195,17 @@ export default function DeploymentDetailPage() {
             <Badge
               variant={STATUS_CONFIG[d.status]?.variant ?? 'outline'}
               className={`text-sm px-3 py-1 flex items-center gap-1 font-semibold ${
-                d.status === 'SUCCESS' ? 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20' : ''
+                d.status === 'SUCCESS'
+                  ? 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20'
+                  : ''
               } ${
-                d.status === 'BUILDING' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20' : ''
+                d.status === 'BUILDING'
+                  ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20'
+                  : ''
               } ${
-                d.status === 'DEPLOYING' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' : ''
+                d.status === 'DEPLOYING'
+                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                  : ''
               }`}
             >
               {STATUS_CONFIG[d.status]?.icon}
@@ -243,12 +268,7 @@ export default function DeploymentDetailPage() {
             <CardTitle className="text-sm font-semibold">Console Logs</CardTitle>
           </div>
           {logs && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-3"
-              onClick={copyToClipboard}
-            >
+            <Button variant="outline" size="sm" className="h-8 px-3" onClick={copyToClipboard}>
               {copied ? (
                 <>
                   <Check className="mr-2 h-3.5 w-3.5 text-green-500" />
@@ -270,7 +290,10 @@ export default function DeploymentDetailPage() {
             <div className="p-6 text-sm text-muted-foreground space-y-2">
               <p>No logs available yet.</p>
               <p className="text-xs text-muted-foreground/80">
-                Catatan: Jika log build tidak muncul, pastikan API token Coolify yang Anda gunakan di panel <strong>Providers</strong> memiliki izin (permission) <strong>read:sensitive</strong> agar sistem dapat menarik log build secara real-time.
+                Catatan: Jika log build tidak muncul, pastikan API token Coolify yang Anda gunakan
+                di panel <strong>Providers</strong> memiliki izin (permission){' '}
+                <strong>read:sensitive</strong> agar sistem dapat menarik log build secara
+                real-time.
               </p>
             </div>
           )}
@@ -288,14 +311,14 @@ function TerminalLogs({ logs }: { logs: string }) {
 
   const lines = useMemo(() => {
     if (!logs) return [];
-    
+
     return logs.split('\n').map((line, idx) => {
       const isoRegex = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)\s(.*)$/;
       const coolifyRegex = /^(\d{4}-[A-Za-z]{3}-\d{2}\s\d{2}:\d{2}:\d{2}(?:\.\d+)?)\s(.*)$/;
-      
+
       let timestamp = '';
       let content = line;
-      
+
       const coolifyMatch = line.match(coolifyRegex);
       if (coolifyMatch) {
         timestamp = coolifyMatch[1];
@@ -307,17 +330,15 @@ function TerminalLogs({ logs }: { logs: string }) {
           content = isoMatch[2];
         }
       }
-      
+
       const contentLower = content.toLowerCase();
-      const isError = 
-        contentLower.includes('error') || 
-        contentLower.includes('failed') || 
-        contentLower.includes('err:') || 
+      const isError =
+        contentLower.includes('error') ||
+        contentLower.includes('failed') ||
+        contentLower.includes('err:') ||
         contentLower.includes('exit status 1');
-        
-      const isWarning = 
-        contentLower.includes('warning') || 
-        contentLower.includes('warn:');
+
+      const isWarning = contentLower.includes('warning') || contentLower.includes('warn:');
 
       return {
         id: idx,
@@ -336,7 +357,7 @@ function TerminalLogs({ logs }: { logs: string }) {
     return lines.filter(
       (line) =>
         line.content.toLowerCase().includes(lowerFilter) ||
-        line.timestamp.toLowerCase().includes(lowerFilter)
+        line.timestamp.toLowerCase().includes(lowerFilter),
     );
   }, [lines, filter]);
 
@@ -390,7 +411,10 @@ function TerminalLogs({ logs }: { logs: string }) {
       <div className="p-4 overflow-y-auto max-h-96 min-h-[250px] space-y-0.5">
         {filteredLines.length > 0 ? (
           filteredLines.map((line) => (
-            <div key={line.id} className="flex items-start hover:bg-zinc-900/40 py-0.5 px-1 rounded transition-colors">
+            <div
+              key={line.id}
+              className="flex items-start hover:bg-zinc-900/40 py-0.5 px-1 rounded transition-colors"
+            >
               {showTimestamps && line.timestamp && (
                 <span className="text-zinc-600 mr-4 select-none whitespace-nowrap">
                   {line.timestamp}
@@ -401,8 +425,8 @@ function TerminalLogs({ logs }: { logs: string }) {
                   line.isError
                     ? 'text-red-400 font-semibold'
                     : line.isWarning
-                    ? 'text-amber-400'
-                    : 'text-zinc-300'
+                      ? 'text-amber-400'
+                      : 'text-zinc-300'
                 }`}
               >
                 {line.content}

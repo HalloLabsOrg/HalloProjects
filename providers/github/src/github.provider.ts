@@ -1,7 +1,14 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { Octokit } from '@octokit/rest';
 import type { RepositoryProvider } from '@hallo/sdk';
-import type { SdkRepository, Branch, Commit, WebhookConfig, Webhook, RepositoryFile } from '@hallo/sdk';
+import type {
+  SdkRepository,
+  Branch,
+  Commit,
+  WebhookConfig,
+  Webhook,
+  RepositoryFile,
+} from '@hallo/sdk';
 import type { GithubConfig } from './types';
 
 export class GithubProvider implements RepositoryProvider {
