@@ -30,9 +30,6 @@ import {
   User,
   Plug,
   GitBranch,
-  CheckCircle2,
-  ArrowRight,
-  HelpCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {

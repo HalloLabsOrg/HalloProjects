@@ -570,7 +570,8 @@ export default function ProjectDetailPage() {
                           setDeployBranch(svc.branch);
                           setDeployEnvId(proj?.environments?.[0]?.id ?? '');
                           setDeployProviderId(
-                            (providersData as any[] ?? []).find((p: any) => p.type === 'COOLIFY')?.id ?? '',
+                            ((providersData as any[]) ?? []).find((p: any) => p.type === 'COOLIFY')
+                              ?.id ?? '',
                           );
                           setDeployDialogOpen(true);
                         }}
