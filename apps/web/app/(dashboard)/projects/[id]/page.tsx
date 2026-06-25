@@ -9,6 +9,7 @@ import {
   repositoriesApi,
   deploymentsApi,
   environmentsApi,
+  providersApi,
 } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ import {
   Search,
   Edit,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -82,6 +84,13 @@ export default function ProjectDetailPage() {
   const [createNewBranch, setCreateNewBranch] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [baseBranch, setBaseBranch] = useState('main');
+
+  // Deployment Target / Trigger Dialog states
+  const [deployDialogOpen, setDeployDialogOpen] = useState(false);
+  const [serviceToDeploy, setServiceToDeploy] = useState<any>(null);
+  const [deployEnvId, setDeployEnvId] = useState('');
+  const [deployProviderId, setDeployProviderId] = useState('');
+  const [deployBranch, setDeployBranch] = useState('');
 
   // Project Edit / Delete states
   const [projectEditOpen, setProjectEditOpen] = useState(false);
@@ -160,10 +169,49 @@ export default function ProjectDetailPage() {
     enabled: serviceOpen,
   });
 
+  const targetRepoId = serviceOpen
+    ? serviceForm.repositoryId
+    : (serviceToDeploy?.repositoryId ?? '');
   const { data: branches, isLoading: isLoadingBranches } = useQuery({
-    queryKey: ['repository-branches', serviceForm.repositoryId],
-    queryFn: () => repositoriesApi.branches(serviceForm.repositoryId),
-    enabled: !!serviceForm.repositoryId && serviceOpen,
+    queryKey: ['repository-branches', targetRepoId],
+    queryFn: () => repositoriesApi.branches(targetRepoId),
+    enabled: !!targetRepoId && (serviceOpen || deployDialogOpen),
+  });
+
+  const { data: providersData } = useQuery({
+    queryKey: ['providers'],
+    queryFn: () => providersApi.list(),
+  });
+
+  const triggerDeployMutation = useMutation({
+    mutationFn: (payload: {
+      serviceId: string;
+      environmentId: string;
+      providerId: string;
+      branch: string;
+    }) =>
+      deploymentsApi.trigger(payload.serviceId, {
+        environmentId: payload.environmentId,
+        providerId: payload.providerId,
+        branch: payload.branch,
+      }),
+    onSuccess: (newDep: any) => {
+      toast({
+        title: 'Deployment Triggered!',
+        description: `Successfully queued build for service "${serviceToDeploy?.name}" on branch "${deployBranch}".`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['deployments', 'project', id] });
+      setDeployDialogOpen(false);
+      router.push(`/deployments/${newDep.id}`);
+    },
+    onError: (err: any) => {
+      const errMsg = err.response?.data?.message || err.message || 'Failed to trigger deployment';
+      toast({
+        title: 'Deployment Failed',
+        description: errMsg,
+        variant: 'destructive',
+      });
+    },
   });
 
   const createBranchMutation = useMutation({
@@ -498,7 +546,7 @@ export default function ProjectDetailPage() {
                   <TableHead>Repository</TableHead>
                   <TableHead>Branch</TableHead>
                   <TableHead>Deployments</TableHead>
-                  <TableHead className="w-20 text-right">Actions</TableHead>
+                  <TableHead className="w-36 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -512,7 +560,25 @@ export default function ProjectDetailPage() {
                       <code className="text-xs bg-muted px-1 py-0.5 rounded">{svc.branch}</code>
                     </TableCell>
                     <TableCell>{svc._count?.deployments ?? 0}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex items-center justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1 text-primary hover:text-primary hover:bg-primary/5 border-primary/20"
+                        onClick={() => {
+                          setServiceToDeploy(svc);
+                          setDeployBranch(svc.branch);
+                          setDeployEnvId(proj?.environments?.[0]?.id ?? '');
+                          setDeployProviderId(
+                            (providersData as any[] ?? []).find((p: any) => p.type === 'COOLIFY')?.id ?? '',
+                          );
+                          setDeployDialogOpen(true);
+                        }}
+                        title="Deploy Service"
+                      >
+                        <Rocket className="h-3 w-3.5 text-primary" />
+                        <span>Deploy</span>
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -894,6 +960,157 @@ export default function ProjectDetailPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deploy Service Dialog */}
+      <Dialog open={deployDialogOpen} onOpenChange={setDeployDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5 text-primary" />
+              <span>Deploy Service: {serviceToDeploy?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {(() => {
+            const coolifyProviders = (providersData ?? []).filter((p: any) => p.type === 'COOLIFY');
+
+            if (coolifyProviders.length === 0) {
+              return (
+                <div className="space-y-4 py-2">
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-600 flex gap-2">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">No Coolify Server Configured</p>
+                      <p className="text-xs mt-1 leading-relaxed">
+                        To deploy this service, you need to connect a Coolify target instance.
+                        Please visit the Providers page to configure one.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" onClick={() => setDeployDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setDeployDialogOpen(false);
+                        router.push('/providers');
+                      }}
+                    >
+                      Connect Coolify
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Target Environment</Label>
+                  <select
+                    className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={deployEnvId}
+                    onChange={(e) => setDeployEnvId(e.target.value)}
+                  >
+                    {(proj?.environments ?? []).map((env: any) => (
+                      <option key={env.id} value={env.id}>
+                        {env.name} {env.branch ? `(branch: ${env.branch})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Define variables and routing specific to this environment.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Coolify Target Server</Label>
+                  <select
+                    className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={deployProviderId}
+                    onChange={(e) => setDeployProviderId(e.target.value)}
+                  >
+                    {coolifyProviders.map((prov: any) => (
+                      <option key={prov.id} value={prov.id}>
+                        {prov.name} ({prov.config?.apiUrl ?? 'API target'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Source Branch</Label>
+                  {isLoadingBranches ? (
+                    <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span>Fetching branches from GitHub...</span>
+                    </div>
+                  ) : (
+                    <select
+                      className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={deployBranch}
+                      onChange={(e) => setDeployBranch(e.target.value)}
+                    >
+                      {(branches ?? []).map((b: any) => (
+                        <option key={b.name} value={b.name}>
+                          {b.name} {b.isDefault ? '(default)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t flex flex-col gap-2">
+                  <div className="text-[11px] text-muted-foreground p-3 rounded-lg bg-muted/40 border space-y-1">
+                    <div className="flex justify-between">
+                      <span>Service:</span>
+                      <span className="font-semibold text-foreground">{serviceToDeploy?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Repository:</span>
+                      <span className="font-semibold text-foreground truncate max-w-[200px]">
+                        {serviceToDeploy?.repository?.fullName}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full gap-2 mt-1"
+                    onClick={() => {
+                      triggerDeployMutation.mutate({
+                        serviceId: serviceToDeploy.id,
+                        environmentId: deployEnvId,
+                        providerId: deployProviderId,
+                        branch: deployBranch,
+                      });
+                    }}
+                    disabled={
+                      triggerDeployMutation.isPending ||
+                      isLoadingBranches ||
+                      !deployEnvId ||
+                      !deployProviderId ||
+                      !deployBranch
+                    }
+                  >
+                    {triggerDeployMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Deploying to Coolify...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="h-4 w-4" />
+                        <span>Deploy Now</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

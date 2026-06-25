@@ -2,10 +2,18 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { deploymentsApi, projectsApi, monitoringApi, auditLogsApi } from '@/lib/api';
+import {
+  deploymentsApi,
+  projectsApi,
+  monitoringApi,
+  auditLogsApi,
+  providersApi,
+  repositoriesApi,
+} from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
   FolderKanban,
@@ -20,6 +28,11 @@ import {
   ChevronRight,
   RefreshCw,
   User,
+  Plug,
+  GitBranch,
+  CheckCircle2,
+  ArrowRight,
+  HelpCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -48,6 +61,16 @@ export default function DashboardPage() {
     retry: false,
   });
 
+  const { data: providersData } = useQuery({
+    queryKey: ['providers'],
+    queryFn: () => providersApi.list(),
+  });
+
+  const { data: reposData } = useQuery({
+    queryKey: ['repositories-count'],
+    queryFn: () => repositoriesApi.list({ limit: 1 }),
+  });
+
   const { mutate: quickRedeploy, isPending: deploying } = useMutation({
     mutationFn: ({ serviceId, environmentId, providerId, branch }: any) =>
       deploymentsApi.trigger(serviceId, { environmentId, providerId, branch }),
@@ -68,6 +91,12 @@ export default function DashboardPage() {
   const projectCount = (projectsData as any)?.meta?.total ?? 0;
   const deployments = (deploymentsData as any)?.data ?? [];
   const totalDeployments = (deploymentsData as any)?.meta?.total ?? 0;
+
+  const hasGithub = (providersData ?? []).some((p: any) => p.type === 'GITHUB');
+  const hasCoolify = (providersData ?? []).some((p: any) => p.type === 'COOLIFY');
+  const hasRepos = ((reposData as any)?.data ?? []).length > 0;
+  const hasServices = (monitoringData ?? []).flatMap((p: any) => p.services).length > 0;
+  const hasDeployments = totalDeployments > 0;
 
   const allServices = (monitoringData ?? []).flatMap((p: any) => p.services);
   const offlineServicesCount = allServices.filter((s: any) => s.status === 'OFFLINE').length;
@@ -138,6 +167,241 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Onboarding Guide Card */}
+      <Card className="mb-8 overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-card shadow-md">
+        <CardHeader className="pb-3 border-b bg-muted/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <Rocket className="h-5 w-5 text-primary animate-pulse" />
+              Deployment Workflow Guide
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Follow these simple steps to connect, sync, and deploy your code repositories to
+              Coolify.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-background/50 border px-3 py-1 rounded-full font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Interactive Guide</span>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+            {/* Step 1 */}
+            <div className="flex flex-col justify-between space-y-4 p-4 rounded-xl border bg-card/60 hover:bg-card hover:shadow-sm transition-all duration-200">
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+                    1
+                  </div>
+                  {hasGithub && hasCoolify ? (
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold"
+                    >
+                      CONNECTED
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px] font-bold"
+                    >
+                      INCOMPLETE
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                    <Plug className="h-4 w-4 text-muted-foreground" /> Connect Providers
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Connect GitHub (for source code) and your Coolify instance (for deployment
+                    target).
+                  </p>
+                </div>
+                <div className="text-[11px] space-y-1 border-t pt-2 mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">GitHub Integration</span>
+                    <span
+                      className={
+                        hasGithub ? 'text-emerald-500 font-medium' : 'text-amber-500 font-medium'
+                      }
+                    >
+                      {hasGithub ? '🟢 Linked' : '🟡 Not Connected'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Coolify Instance</span>
+                    <span
+                      className={
+                        hasCoolify ? 'text-emerald-500 font-medium' : 'text-amber-500 font-medium'
+                      }
+                    >
+                      {hasCoolify ? '🟢 Linked' : '🟡 Not Connected'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant={hasGithub && hasCoolify ? 'outline' : 'default'}
+                onClick={() => router.push('/providers')}
+                className="w-full text-xs font-semibold"
+              >
+                Connect Providers
+              </Button>
+            </div>
+
+            {/* Step 2 */}
+            <div
+              className={`flex flex-col justify-between space-y-4 p-4 rounded-xl border bg-card/60 hover:bg-card hover:shadow-sm transition-all duration-200 ${!(hasGithub && hasCoolify) ? 'opacity-60' : ''}`}
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+                    2
+                  </div>
+                  {hasRepos ? (
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold"
+                    >
+                      IMPORTED
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] font-bold">
+                      PENDING
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                    <GitBranch className="h-4 w-4 text-muted-foreground" /> Import Repo
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Import target repositories from your GitHub account into the local registry.
+                  </p>
+                </div>
+                <div className="text-[11px] space-y-1 border-t pt-2 mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Sync Registry</span>
+                    <span>{hasRepos ? '🟢 Repos Synced' : '⚪ Awaiting Providers'}</span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant={hasRepos ? 'outline' : hasGithub && hasCoolify ? 'default' : 'secondary'}
+                disabled={!(hasGithub && hasCoolify)}
+                onClick={() => router.push('/repositories')}
+                className="w-full text-xs font-semibold"
+              >
+                Import Repository
+              </Button>
+            </div>
+
+            {/* Step 3 */}
+            <div
+              className={`flex flex-col justify-between space-y-4 p-4 rounded-xl border bg-card/60 hover:bg-card hover:shadow-sm transition-all duration-200 ${!hasRepos ? 'opacity-60' : ''}`}
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+                    3
+                  </div>
+                  {hasServices ? (
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold"
+                    >
+                      READY
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] font-bold">
+                      PENDING
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                    <FolderKanban className="h-4 w-4 text-muted-foreground" /> Create Project
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Create a project and link your imported repository as a project service.
+                  </p>
+                </div>
+                <div className="text-[11px] space-y-1 border-t pt-2 mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Service Created</span>
+                    <span>{hasServices ? '🟢 Service OK' : '⚪ Awaiting Repo'}</span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant={hasServices ? 'outline' : hasRepos ? 'default' : 'secondary'}
+                disabled={!hasRepos}
+                onClick={() => router.push('/projects')}
+                className="w-full text-xs font-semibold"
+              >
+                Setup Project
+              </Button>
+            </div>
+
+            {/* Step 4 */}
+            <div
+              className={`flex flex-col justify-between space-y-4 p-4 rounded-xl border bg-card/60 hover:bg-card hover:shadow-sm transition-all duration-200 ${!hasServices ? 'opacity-60' : ''}`}
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+                    4
+                  </div>
+                  {hasDeployments ? (
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold"
+                    >
+                      DEPLOYED
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] font-bold">
+                      PENDING
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                    <Rocket className="h-4 w-4 text-muted-foreground" /> One-Click Deploy
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Trigger deployment to build and deploy your repository live to Coolify.
+                  </p>
+                </div>
+                <div className="text-[11px] space-y-1 border-t pt-2 mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Active Deployments</span>
+                    <span className="font-mono">{totalDeployments} builds</span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant={hasDeployments ? 'outline' : hasServices ? 'default' : 'secondary'}
+                disabled={!hasServices}
+                onClick={() => router.push('/projects')}
+                className="w-full text-xs font-semibold"
+              >
+                Go to Projects
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

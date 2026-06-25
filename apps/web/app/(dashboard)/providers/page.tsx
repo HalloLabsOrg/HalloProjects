@@ -16,15 +16,17 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Plug, Trash2, CheckCircle, Loader2, Shield, Github } from 'lucide-react';
+import { Plug, Trash2, CheckCircle, Loader2, Shield, Github, Server } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [providerType, setProviderType] = useState<'github' | 'coolify'>('github');
   const [method, setMethod] = useState<'app' | 'pat'>('app');
   const [form, setForm] = useState({ name: '', token: '', owner: '' });
+  const [coolifyForm, setCoolifyForm] = useState({ name: '', apiUrl: '', apiToken: '' });
 
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['providers'] });
@@ -79,14 +81,24 @@ export default function ProvidersPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => providersApi.create('github', form),
+    mutationFn: () => {
+      if (providerType === 'github') {
+        return providersApi.create('github', form);
+      } else {
+        return providersApi.create('coolify', coolifyForm);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       setOpen(false);
       setForm({ name: '', token: '', owner: '' });
+      setCoolifyForm({ name: '', apiUrl: '', apiToken: '' });
       toast({ title: 'Provider connected successfully' });
     },
-    onError: () => toast({ title: 'Failed to connect provider', variant: 'destructive' }),
+    onError: (err: any) => {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to connect provider';
+      toast({ title: errMsg, variant: 'destructive' });
+    },
   });
 
   const testMutation = useMutation({
@@ -161,123 +173,204 @@ export default function ProvidersPage() {
             Manage your Git and deployment platform connections.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(val) => {
+            setOpen(val);
+            if (!val) {
+              setForm({ name: '', token: '', owner: '' });
+              setCoolifyForm({ name: '', apiUrl: '', apiToken: '' });
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plug className="h-4 w-4" />
-              Connect GitHub
+              Connect Provider
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Connect GitHub Provider</DialogTitle>
+              <DialogTitle>Connect Provider Connection</DialogTitle>
             </DialogHeader>
 
             <div className="flex border-b border-border my-2">
               <button
                 type="button"
-                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  method === 'app'
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 transition-colors ${
+                  providerType === 'github'
                     ? 'border-primary text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
-                onClick={() => setMethod('app')}
+                onClick={() => setProviderType('github')}
               >
-                GitHub App (No-env)
+                GitHub
               </button>
               <button
                 type="button"
-                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  method === 'pat'
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 transition-colors ${
+                  providerType === 'coolify'
                     ? 'border-primary text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
-                onClick={() => setMethod('pat')}
+                onClick={() => setProviderType('coolify')}
               >
-                PAT
+                Coolify
               </button>
             </div>
 
-            {method === 'app' ? (
-              <div className="space-y-4 py-4">
-                {appConfigured ? (
-                  <div className="space-y-4 text-center">
-                    <div className="flex items-center justify-center p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
-                      <Shield className="h-5 w-5 mr-2 flex-shrink-0" />
-                      <span>
-                        GitHub App <strong>{appStatus?.appName}</strong> is fully configured.
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Install the application on any GitHub account or organization to start syncing
-                      its repositories.
-                    </p>
-                    <Button
-                      className="w-full flex items-center justify-center gap-2"
-                      size="lg"
-                      onClick={() => {
-                        if (appStatus?.htmlUrl) {
-                          window.open(`${appStatus.htmlUrl}/installations/new`, '_blank');
-                        }
-                      }}
-                    >
-                      <Plug className="h-5 w-5" />
-                      Connect / Install on Account
-                    </Button>
+            {providerType === 'github' ? (
+              <>
+                <div className="flex border-b border-border/60 my-2">
+                  <button
+                    type="button"
+                    className={`flex-1 pb-1.5 text-xs font-medium border-b-2 transition-colors ${
+                      method === 'app'
+                        ? 'border-primary/80 text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                    onClick={() => setMethod('app')}
+                  >
+                    GitHub App (No-env)
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 pb-1.5 text-xs font-medium border-b-2 transition-colors ${
+                      method === 'pat'
+                        ? 'border-primary/80 text-foreground font-semibold'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                    onClick={() => setMethod('pat')}
+                  >
+                    PAT (Personal Access Token)
+                  </button>
+                </div>
+
+                {method === 'app' ? (
+                  <div className="space-y-4 py-4">
+                    {appConfigured ? (
+                      <div className="space-y-4 text-center">
+                        <div className="flex items-center justify-center p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
+                          <Shield className="h-5 w-5 mr-2 flex-shrink-0" />
+                          <span>
+                            GitHub App <strong>{appStatus?.appName}</strong> is fully configured.
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Install the application on any GitHub account or organization to start
+                          syncing its repositories.
+                        </p>
+                        <Button
+                          className="w-full flex items-center justify-center gap-2"
+                          size="lg"
+                          onClick={() => {
+                            if (appStatus?.htmlUrl) {
+                              window.open(`${appStatus.htmlUrl}/installations/new`, '_blank');
+                            }
+                          }}
+                        >
+                          <Plug className="h-5 w-5" />
+                          Connect / Install on Account
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Register a self-hosted GitHub App dynamically. Zero environment variable
+                          configuration required.
+                        </p>
+                        <Button
+                          className="w-full flex items-center justify-center gap-2"
+                          size="lg"
+                          onClick={handleCreateApp}
+                        >
+                          <Shield className="h-5 w-5" />
+                          Create GitHub App Connection
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground text-center">
-                      Register a self-hosted GitHub App dynamically. Zero environment variable
-                      configuration required.
-                    </p>
+                  <div className="space-y-4 py-2">
+                    <div className="space-y-1">
+                      <Label>Name</Label>
+                      <Input
+                        placeholder="My GitHub PAT"
+                        value={form.name}
+                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Personal Access Token</Label>
+                      <Input
+                        type="password"
+                        placeholder="github_pat_xxx"
+                        value={form.token}
+                        onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Organization (optional)</Label>
+                      <Input
+                        placeholder="my-org"
+                        value={form.owner}
+                        onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}
+                      />
+                    </div>
                     <Button
-                      className="w-full flex items-center justify-center gap-2"
-                      size="lg"
-                      onClick={handleCreateApp}
+                      className="w-full"
+                      onClick={() => createMutation.mutate()}
+                      disabled={createMutation.isPending || !form.name || !form.token}
                     >
-                      <Shield className="h-5 w-5" />
-                      Create GitHub App Connection
+                      {createMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      Connect GitHub
                     </Button>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
               <div className="space-y-4 py-2">
                 <div className="space-y-1">
                   <Label>Name</Label>
                   <Input
-                    placeholder="My GitHub"
-                    value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="My Coolify Instance"
+                    value={coolifyForm.name}
+                    onChange={(e) => setCoolifyForm((f) => ({ ...f, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Personal Access Token</Label>
+                  <Label>Coolify API URL</Label>
+                  <Input
+                    placeholder="https://coolify.my-domain.com"
+                    value={coolifyForm.apiUrl}
+                    onChange={(e) => setCoolifyForm((f) => ({ ...f, apiUrl: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>API Token</Label>
                   <Input
                     type="password"
-                    placeholder="github_pat_xxx"
-                    value={form.token}
-                    onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Organization (optional)</Label>
-                  <Input
-                    placeholder="my-org"
-                    value={form.owner}
-                    onChange={(e) => setForm((f) => ({ ...f, owner: e.target.value }))}
+                    placeholder="coolify_api_token..."
+                    value={coolifyForm.apiToken}
+                    onChange={(e) => setCoolifyForm((f) => ({ ...f, apiToken: e.target.value }))}
                   />
                 </div>
                 <Button
                   className="w-full"
                   onClick={() => createMutation.mutate()}
-                  disabled={createMutation.isPending || !form.name || !form.token}
+                  disabled={
+                    createMutation.isPending ||
+                    !coolifyForm.name.trim() ||
+                    !coolifyForm.apiUrl.trim() ||
+                    !coolifyForm.apiToken.trim()
+                  }
                 >
                   {createMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : null}
-                  Connect
+                  Connect Coolify
                 </Button>
               </div>
             )}
@@ -347,8 +440,8 @@ export default function ProvidersPage() {
         <EmptyState
           icon={Plug}
           title="No providers connected"
-          description="Connect a GitHub account (via GitHub App, OAuth, or PAT) to start syncing repositories."
-          action={{ label: 'Connect GitHub', onClick: () => setOpen(true) }}
+          description="Connect a GitHub account (via GitHub App, OAuth, or PAT) or a Coolify deployment provider to start."
+          action={{ label: 'Connect Provider', onClick: () => setOpen(true) }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -369,22 +462,44 @@ export default function ProvidersPage() {
                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
                           <Github className="h-4 w-4 text-foreground" />
                         </div>
+                      ) : provider.type === 'COOLIFY' ? (
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                          <Server className="h-4 w-4 text-foreground" />
+                        </div>
                       ) : (
                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
                           <Plug className="h-4 w-4 text-muted-foreground" />
                         </div>
                       )}
-                      <CardTitle className="text-base">{provider.name}</CardTitle>
+                      <CardTitle className="text-base truncate max-w-[130px]" title={provider.name}>
+                        {provider.name}
+                      </CardTitle>
                     </div>
                     <Badge variant={provider.isActive ? 'default' : 'secondary'}>
-                      {authMethod === 'github_app_installation' ? 'GitHub App' : provider.type}
+                      {provider.type === 'COOLIFY'
+                        ? 'Coolify'
+                        : authMethod === 'github_app_installation'
+                          ? 'GitHub App'
+                          : provider.type}
                     </Badge>
                   </div>
-                  <CardDescription>
-                    {provider.lastTestedAt
-                      ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleString()}`
-                      : 'Not tested yet'}
+                  <CardDescription
+                    className="truncate max-w-[220px]"
+                    title={provider.config?.apiUrl}
+                  >
+                    {provider.type === 'COOLIFY'
+                      ? provider.config?.apiUrl
+                      : provider.lastTestedAt
+                        ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleString()}`
+                        : 'Not tested yet'}
                   </CardDescription>
+                  {provider.type === 'COOLIFY' && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {provider.lastTestedAt
+                        ? `Last tested: ${new Date(provider.lastTestedAt).toLocaleString()}`
+                        : 'Not tested yet'}
+                    </p>
+                  )}
                   <div className="flex items-center space-x-2 mt-1.5">
                     {provider.isActive ? (
                       <span className="flex items-center text-xs text-green-500 font-medium">

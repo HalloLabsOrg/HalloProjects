@@ -13,7 +13,7 @@ export const authApi = {
 // Providers
 export const providersApi = {
   list: () => apiClient.get<{ data: unknown[] }>('/api/providers').then((r) => r.data.data),
-  create: (type: 'github', dto: unknown) =>
+  create: (type: 'github' | 'coolify', dto: unknown) =>
     apiClient.post<{ data: unknown }>(`/api/providers/${type}`, dto).then((r) => r.data.data),
   test: (id: string) =>
     apiClient.post<{ data: unknown }>(`/api/providers/${id}/test`).then((r) => r.data.data),

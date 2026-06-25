@@ -16,7 +16,7 @@ export class HealthSchedulerService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     const intervalStr = this.configService.get<string>('HEALTH_CHECK_INTERVAL');
     // Default to 60000ms (60 seconds)
-    const interval = intervalStr ? parseInt(intervalStr, 10) : 60000;
+    const interval = intervalStr ? parseInt(intervalStr, 10) * 1000 : 60000;
 
     this.logger.log(`Initializing repeatable service health checks. Interval: ${interval}ms`);
 
