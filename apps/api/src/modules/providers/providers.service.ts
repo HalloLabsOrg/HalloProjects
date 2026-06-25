@@ -135,6 +135,127 @@ export class ProvidersService {
     return this.repositoriesService.sync(connectionId);
   }
 
+  async listCoolifyApplications(id: string) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = await this.factory.getDeploymentProvider(id);
+      return await provider.listApplications();
+    } catch (err: any) {
+      console.error(
+        'Error listing Coolify applications:',
+        err.response?.data || err.message || err,
+      );
+      throw new BadRequestException(
+        `Failed to fetch applications from Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  async listCoolifyServers(id: string) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = (await this.factory.getDeploymentProvider(id)) as any;
+      return await provider.listServers();
+    } catch (err: any) {
+      console.error('Error listing Coolify servers:', err.response?.data || err.message || err);
+      throw new BadRequestException(
+        `Failed to fetch servers from Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  async listCoolifyProjects(id: string) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = (await this.factory.getDeploymentProvider(id)) as any;
+      const projects = await provider.listProjects();
+      const detailedProjects = await Promise.all(
+        (projects || []).map(async (p: any) => {
+          try {
+            return await provider.getProject(p.uuid);
+          } catch (e) {
+            return p;
+          }
+        }),
+      );
+      return detailedProjects;
+    } catch (err: any) {
+      console.error('Error listing Coolify projects:', err.response?.data || err.message || err);
+      throw new BadRequestException(
+        `Failed to fetch projects from Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  async listCoolifySources(id: string) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = (await this.factory.getDeploymentProvider(id)) as any;
+      return await provider.listSources();
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return [];
+      }
+      console.error('Error listing Coolify sources:', err.response?.data || err.message || err);
+      throw new BadRequestException(
+        `Failed to fetch Git sources from Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  async createCoolifyApplication(id: string, payload: any) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = (await this.factory.getDeploymentProvider(id)) as any;
+      return await provider.createApplication(payload);
+    } catch (err: any) {
+      console.error(
+        'Error creating Coolify application:',
+        err.response?.data || err.message || err,
+      );
+      throw new BadRequestException(
+        `Failed to create application on Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  async createCoolifyProject(id: string, payload: any) {
+    const connection = await this.prisma.providerConnection.findUnique({ where: { id } });
+    if (!connection) throw new NotFoundException(`Provider ${id} not found`);
+    if (connection.type !== ProviderType.COOLIFY) {
+      throw new BadRequestException('Provider is not a Coolify connection');
+    }
+    try {
+      const provider = (await this.factory.getDeploymentProvider(id)) as any;
+      return await provider.createProject(payload);
+    } catch (err: any) {
+      console.error('Error creating Coolify project:', err.response?.data || err.message || err);
+      throw new BadRequestException(
+        `Failed to create project on Coolify: ${err.response?.data?.message || err.message || 'Unknown error'}`,
+      );
+    }
+  }
+
   generateGithubAppJwt(appId: string, privateKeyPem: string): string {
     const header = {
       alg: 'RS256',

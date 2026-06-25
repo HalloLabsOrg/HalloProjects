@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "build": "turbo run build",
+    "clean": "rm -rf apps/web/.next apps/docs/.docusaurus .turbo apps/api/.turbo apps/docs/.turbo apps/web/.turbo apps/worker/.turbo packages/sdk/.turbo packages/shared/.turbo packages/templates/.turbo packages/ui/.turbo providers/coolify/.turbo providers/github/.turbo",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",

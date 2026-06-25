@@ -1,4 +1,4 @@
-import { SdkRepository, Branch, Commit, WebhookConfig, Webhook } from '../types';
+import { SdkRepository, Branch, Commit, WebhookConfig, Webhook, RepositoryFile } from '../types';
 
 export interface RepositoryProvider {
   listRepositories(): Promise<SdkRepository[]>;
@@ -8,4 +8,5 @@ export interface RepositoryProvider {
   registerWebhook(repositoryExternalId: string, config: WebhookConfig): Promise<Webhook>;
   validateWebhookSignature(payload: Buffer, signature: string): boolean;
   createBranch(repositoryExternalId: string, name: string, fromBranch: string): Promise<Branch>;
+  getTree(repositoryExternalId: string, branch: string): Promise<RepositoryFile[]>;
 }

@@ -20,8 +20,8 @@ export class DeploymentProcessor {
   ) {}
 
   @Process(JOB_NAMES.DEPLOY_SERVICE)
-  async handleDeploy(job: Job<{ deploymentId: string }>) {
-    const { deploymentId } = job.data;
+  async handleDeploy(job: Job<{ deploymentId: string; coolifyAppUuid?: string }>) {
+    const { deploymentId, coolifyAppUuid } = job.data;
     this.logger.log(`Processing deployment ${deploymentId}`);
 
     const deployment = await this.prisma.deployment.findUnique({
@@ -47,8 +47,64 @@ export class DeploymentProcessor {
     try {
       const coolify = this.getCoolifyProvider(deployment.provider);
 
+      let applicationUuid =
+        coolifyAppUuid ?? deployment.service.repository?.externalId ?? deployment.serviceId;
+
+      if (!coolifyAppUuid) {
+        try {
+          const apps = await coolify.listApplications();
+          const repoFullName = deployment.service.repository?.fullName;
+          const repoName = deployment.service.repository?.name;
+          const serviceName = deployment.service.name;
+          const serviceSlug = deployment.service.slug;
+
+          // Try to find by git repository first (exact or name match)
+          let matchedApp = apps.find((app) => {
+            if (!app.gitRepository) return false;
+            const appRepoLower = app.gitRepository.toLowerCase();
+            return (
+              appRepoLower === repoFullName?.toLowerCase() ||
+              appRepoLower.endsWith('/' + repoName?.toLowerCase())
+            );
+          });
+
+          // Try to find by name / slug match
+          if (!matchedApp) {
+            matchedApp = apps.find((app) => {
+              const appNameLower = app.name.toLowerCase();
+              return (
+                appNameLower === serviceName.toLowerCase() ||
+                appNameLower === serviceSlug.toLowerCase() ||
+                appNameLower.includes(serviceName.toLowerCase()) ||
+                appNameLower.includes(serviceSlug.toLowerCase())
+              );
+            });
+          }
+
+          if (matchedApp) {
+            this.logger.log(
+              `Resolved Coolify Application UUID to ${matchedApp.uuid} (${matchedApp.name})`,
+            );
+            applicationUuid = matchedApp.uuid;
+          } else {
+            throw new Error(
+              `Aplikasi Coolify tidak ditemukan. Silakan buat aplikasi baru terlebih dahulu dengan mencentang 'Buat Aplikasi Baru secara Otomatis' di panel deploy.`
+            );
+          }
+        } catch (err) {
+          if (err instanceof Error && err.message.includes('Aplikasi Coolify tidak ditemukan')) {
+            throw err;
+          }
+          this.logger.error(
+            `Failed to list Coolify applications for dynamic resolution: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
+      }
+
       const { externalId } = await coolify.deploy({
-        applicationUuid: deployment.service.repository?.externalId ?? deployment.serviceId,
+        applicationUuid,
         branch: deployment.branch,
         commitSha: deployment.commitSha ?? undefined,
         force: false,
@@ -98,7 +154,13 @@ export class DeploymentProcessor {
       // Timeout
       await this.updateStatus(deploymentId, DeploymentStatus.FAILED, 'Deployment timed out');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      let message = err instanceof Error ? err.message : 'Unknown error';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = (err as any).response;
+        if (response && response.status === 404) {
+          message = `Request failed with status code 404. Make sure you have created an application in Coolify that matches this service's repository name ("${deployment.service.repository?.name}") or name ("${deployment.service.name}").`;
+        }
+      }
       this.logger.error(`Deployment ${deploymentId} failed: ${message}`);
       await this.updateStatus(deploymentId, DeploymentStatus.FAILED, message);
       throw err;

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { Octokit } from '@octokit/rest';
 import type { RepositoryProvider } from '@hallo/sdk';
-import type { SdkRepository, Branch, Commit, WebhookConfig, Webhook } from '@hallo/sdk';
+import type { SdkRepository, Branch, Commit, WebhookConfig, Webhook, RepositoryFile } from '@hallo/sdk';
 import type { GithubConfig } from './types';
 
 export class GithubProvider implements RepositoryProvider {
@@ -166,6 +166,26 @@ export class GithubProvider implements RepositoryProvider {
       sha,
       isDefault: false,
     };
+  }
+
+  async getTree(repositoryExternalId: string, branch: string): Promise<RepositoryFile[]> {
+    const [owner, repo] = repositoryExternalId.split('/');
+    const { data } = await this.octokit.git.getTree({
+      owner,
+      repo,
+      tree_sha: branch,
+      recursive: '1',
+    });
+
+    if (!data.tree) return [];
+
+    return data.tree
+      .filter((item) => item.path && (item.type === 'blob' || item.type === 'tree'))
+      .map((item) => ({
+        path: item.path!,
+        type: item.type === 'tree' ? 'dir' : 'file',
+        size: item.size,
+      }));
   }
 
   private mapRepo(repo: {

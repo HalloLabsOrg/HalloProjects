@@ -44,6 +44,13 @@ export class RepositoriesController {
     return this.repositoriesService.getBranches(id);
   }
 
+  @Get(':id/tree')
+  @ApiOperation({ summary: 'Get repository file tree from GitHub' })
+  @ApiQuery({ name: 'branch', required: true })
+  getTree(@Param('id') id: string, @Query('branch') branch: string) {
+    return this.repositoriesService.getTree(id, branch);
+  }
+
   @Post(':id/branches')
   @ApiOperation({ summary: 'Create a new branch in the repository' })
   createBranch(@Param('id') id: string, @Body() body: { name: string; fromBranch: string }) {

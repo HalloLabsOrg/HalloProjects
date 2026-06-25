@@ -103,6 +103,9 @@ export class DeploymentsService {
       },
     });
     if (!deployment) throw new NotFoundException(`Deployment ${id} not found`);
+    if (deployment.logs) {
+      deployment.logs = parseCoolifyLogs(deployment.logs);
+    }
     return deployment;
   }
 
@@ -137,7 +140,7 @@ export class DeploymentsService {
 
     await this.deployQueue.add(
       JOB_NAMES.DEPLOY_SERVICE,
-      { deploymentId: deployment.id },
+      { deploymentId: deployment.id, coolifyAppUuid: dto.coolifyAppUuid },
       { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, timeout: 600_000 },
     );
 
@@ -195,7 +198,8 @@ export class DeploymentsService {
             return;
           }
 
-          const logs = deployment.logs ?? '';
+          const rawLogs = deployment.logs ?? '';
+          const logs = parseCoolifyLogs(rawLogs);
           const newLogs = logs.substring(sentLength);
           sentLength = logs.length;
 
@@ -207,9 +211,9 @@ export class DeploymentsService {
           });
 
           const isTerminal =
-            deployment.status === DeploymentStatus.SUCCESS ||
-            deployment.status === DeploymentStatus.FAILED ||
-            deployment.status === DeploymentStatus.CANCELLED;
+              deployment.status === DeploymentStatus.SUCCESS ||
+              deployment.status === DeploymentStatus.FAILED ||
+              deployment.status === DeploymentStatus.CANCELLED;
 
           if (isTerminal) {
             subscriber.complete();
@@ -232,4 +236,53 @@ export class DeploymentsService {
       };
     });
   }
+}
+
+function parseCoolifyLogs(rawLogs: string): string {
+  if (!rawLogs) return '';
+
+  const trimmed = rawLogs.trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((item: any) => item && typeof item === 'object' && !item.hidden)
+          .map((item: any) => item.output || '')
+          .join('\n');
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // Regex fallback: find all {"command":...} block matches
+  try {
+    const matches = rawLogs.match(/\{"command":.*?\}(?=\s*,|\s*\]|\s*$)/g);
+    if (matches && matches.length > 0) {
+      const lines: string[] = [];
+      for (const match of matches) {
+        try {
+          const parsed = JSON.parse(match);
+          if (parsed && typeof parsed === 'object' && !parsed.hidden) {
+            lines.push(parsed.output || '');
+          }
+        } catch {
+          const hiddenMatch = match.match(/"hidden"\s*:\s*(true|false)/);
+          const isHidden = hiddenMatch && hiddenMatch[1] === 'true';
+          if (!isHidden) {
+            const outputMatch = match.match(/"output"\s*:\s*"(.*?)"/);
+            if (outputMatch) {
+              lines.push(outputMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'));
+            }
+          }
+        }
+      }
+      if (lines.length > 0) {
+        return lines.join('\n');
+      }
+    }
+  } catch {}
+
+  return rawLogs;
 }

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Plug, Trash2, CheckCircle, Loader2, Shield, Github, Server } from 'lucide-react';
+import { Plug, Trash2, CheckCircle, Loader2, Shield, Github } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProvidersPage() {
@@ -463,8 +463,15 @@ export default function ProvidersPage() {
                           <Github className="h-4 w-4 text-foreground" />
                         </div>
                       ) : provider.type === 'COOLIFY' ? (
-                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
-                          <Server className="h-4 w-4 text-foreground" />
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-[#6B16ED]/10">
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-4.5 w-4.5 fill-[#6B16ED]"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <title>Coolify</title>
+                            <path d="M4.364 4.364V0h17.454v4.364zm0 13.09H0V4.365h4.364zm0 0h17.454v4.364H4.364ZM6.545 6.546v-1.7H22.3V2.182H24v4.363zm0 0v10.4h-1.7v-10.4ZM3.882 17.936v1.7h-1.7v-1.7ZM24 24H6.545v-1.7H22.3v-2.664H24Z" />
+                          </svg>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">

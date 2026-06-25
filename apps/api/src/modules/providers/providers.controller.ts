@@ -75,6 +75,42 @@ export class ProvidersController {
     return this.providersService.testConnection(id);
   }
 
+  @Get(':id/coolify/applications')
+  @ApiOperation({ summary: 'List all applications on a Coolify provider' })
+  listCoolifyApplications(@Param('id') id: string) {
+    return this.providersService.listCoolifyApplications(id);
+  }
+
+  @Get(':id/coolify/servers')
+  @ApiOperation({ summary: 'List all servers on a Coolify provider' })
+  listCoolifyServers(@Param('id') id: string) {
+    return this.providersService.listCoolifyServers(id);
+  }
+
+  @Get(':id/coolify/projects')
+  @ApiOperation({ summary: 'List all projects on a Coolify provider' })
+  listCoolifyProjects(@Param('id') id: string) {
+    return this.providersService.listCoolifyProjects(id);
+  }
+
+  @Get(':id/coolify/sources')
+  @ApiOperation({ summary: 'List all Git sources on a Coolify provider' })
+  listCoolifySources(@Param('id') id: string) {
+    return this.providersService.listCoolifySources(id);
+  }
+
+  @Post(':id/coolify/applications')
+  @ApiOperation({ summary: 'Create a new application on a Coolify provider' })
+  createCoolifyApplication(@Param('id') id: string, @Body() payload: any) {
+    return this.providersService.createCoolifyApplication(id, payload);
+  }
+
+  @Post(':id/coolify/projects')
+  @ApiOperation({ summary: 'Create a new project on a Coolify provider' })
+  createCoolifyProject(@Param('id') id: string, @Body() payload: any) {
+    return this.providersService.createCoolifyProject(id, payload);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Remove a provider connection' })
   async remove(@Param('id') id: string, @CurrentUser() user: User, @Req() req: Request) {

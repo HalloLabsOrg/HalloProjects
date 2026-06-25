@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -48,9 +48,16 @@ import {
   Search,
   Edit,
   Trash2,
+  Settings,
   AlertCircle,
+  FolderTree,
+  Folder,
+  FileCode,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type Tab = 'overview' | 'services' | 'deployments' | 'environments' | 'variables';
 
@@ -91,6 +98,27 @@ export default function ProjectDetailPage() {
   const [deployEnvId, setDeployEnvId] = useState('');
   const [deployProviderId, setDeployProviderId] = useState('');
   const [deployBranch, setDeployBranch] = useState('');
+  const [selectedCoolifyAppUuid, setSelectedCoolifyAppUuid] = useState('');
+  const [showRepoTree, setShowRepoTree] = useState(false);
+
+  // Auto-Create Coolify App states
+  const [autoCreateCoolifyApp, setAutoCreateCoolifyApp] = useState(false);
+  const [coolifyAppName, setCoolifyAppName] = useState('');
+  const [coolifyServerUuid, setCoolifyServerUuid] = useState('');
+  const [coolifyProjectUuid, setCoolifyProjectUuid] = useState('');
+  const [coolifyEnvName, setCoolifyEnvName] = useState('production');
+  const [coolifyGithubAppUuid, setCoolifyGithubAppUuid] = useState('');
+  const [coolifyBuildPack, setCoolifyBuildPack] = useState('nixpacks');
+  const [coolifyExposedPort, setCoolifyExposedPort] = useState('3000');
+  const [coolifyDockfilePath, setCoolifyDockfilePath] = useState('/Dockerfile');
+  const [coolifyBaseDirectory, setCoolifyBaseDirectory] = useState('/');
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [serviceConfigs, setServiceConfigs] = useState<Record<string, any>>({});
+
+  // New project creation inside Coolify
+  const [isCreatingNewCoolifyProject, setIsCreatingNewCoolifyProject] = useState(false);
+  const [newCoolifyProjectName, setNewCoolifyProjectName] = useState('');
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   // Project Edit / Delete states
   const [projectEditOpen, setProjectEditOpen] = useState(false);
@@ -178,10 +206,160 @@ export default function ProjectDetailPage() {
     enabled: !!targetRepoId && (serviceOpen || deployDialogOpen),
   });
 
+  const { data: treeFiles, isLoading: isLoadingTree } = useQuery({
+    queryKey: ['repository-tree', targetRepoId, deployBranch],
+    queryFn: () => repositoriesApi.tree(targetRepoId, deployBranch),
+    enabled: !!targetRepoId && deployDialogOpen && !!deployBranch,
+  });
+
   const { data: providersData } = useQuery({
     queryKey: ['providers'],
     queryFn: () => providersApi.list(),
   });
+
+  const { data: coolifyApps, isLoading: isLoadingCoolifyApps } = useQuery({
+    queryKey: ['providers', deployProviderId, 'coolify-apps'],
+    queryFn: () => providersApi.listCoolifyApplications(deployProviderId),
+    enabled: !!deployProviderId && deployDialogOpen,
+  });
+
+  const { data: coolifyServers } = useQuery({
+    queryKey: ['providers', deployProviderId, 'coolify-servers'],
+    queryFn: () => providersApi.listCoolifyServers(deployProviderId),
+    enabled: !!deployProviderId && deployDialogOpen && autoCreateCoolifyApp,
+  });
+
+  const { data: coolifyProjects } = useQuery({
+    queryKey: ['providers', deployProviderId, 'coolify-projects'],
+    queryFn: () => providersApi.listCoolifyProjects(deployProviderId),
+    enabled: !!deployProviderId && deployDialogOpen && autoCreateCoolifyApp,
+  });
+
+  const { data: coolifySources } = useQuery({
+    queryKey: ['providers', deployProviderId, 'coolify-sources'],
+    queryFn: () => providersApi.listCoolifySources(deployProviderId),
+    enabled: !!deployProviderId && deployDialogOpen && autoCreateCoolifyApp,
+  });
+
+  // Load target configuration from localStorage
+  useEffect(() => {
+    if (services) {
+      const configs: Record<string, any> = {};
+      services.forEach((svc: any) => {
+        const saved = localStorage.getItem(`hallo:deploy-config:${svc.id}`);
+        if (saved) {
+          try {
+            configs[svc.id] = JSON.parse(saved);
+          } catch (e) {
+            // ignore
+          }
+        }
+      });
+      setServiceConfigs(configs);
+    }
+  }, [services]);
+
+  // Prefill new app options when servers, projects, sources load
+  useEffect(() => {
+    if (coolifyServers && coolifyServers.length > 0 && !coolifyServerUuid) {
+      setCoolifyServerUuid(coolifyServers[0].uuid);
+    }
+  }, [coolifyServers, coolifyServerUuid]);
+
+  useEffect(() => {
+    if (coolifyProjects && coolifyProjects.length > 0) {
+      const exists = coolifyProjects.some((p: any) => p.uuid === coolifyProjectUuid);
+      if (!coolifyProjectUuid || !exists) {
+        const projectWithEnv =
+          coolifyProjects.find((p: any) => p.environments && p.environments.length > 0) ||
+          coolifyProjects[0];
+        setCoolifyProjectUuid(projectWithEnv.uuid);
+        setCoolifyEnvName(projectWithEnv.environments?.[0]?.name || 'production');
+      }
+    }
+  }, [coolifyProjects, coolifyProjectUuid]);
+
+  useEffect(() => {
+    if (coolifySources && coolifySources.length > 0 && !coolifyGithubAppUuid) {
+      const gh = coolifySources.find((s: any) => s.type === 'github');
+      if (gh) {
+        setCoolifyGithubAppUuid(gh.uuid);
+      } else {
+        setCoolifyGithubAppUuid(coolifySources[0].uuid);
+      }
+    }
+  }, [coolifySources, coolifyGithubAppUuid]);
+
+  useEffect(() => {
+    if (coolifyApps && coolifyApps.length > 0) {
+      const repoFullName = serviceToDeploy?.repository?.fullName;
+      const repoName = serviceToDeploy?.repository?.name;
+      const matched = coolifyApps.find((app: any) => {
+        if (!app.gitRepository) return false;
+        const appRepoLower = app.gitRepository.toLowerCase();
+        return (
+          appRepoLower === repoFullName?.toLowerCase() ||
+          appRepoLower.endsWith('/' + repoName?.toLowerCase())
+        );
+      });
+      if (matched) {
+        setSelectedCoolifyAppUuid(matched.uuid);
+      } else {
+        setSelectedCoolifyAppUuid('');
+      }
+    } else {
+      setSelectedCoolifyAppUuid('');
+    }
+  }, [coolifyApps, serviceToDeploy]);
+
+  const detectedDockerfiles = useMemo(() => {
+    if (!treeFiles || !Array.isArray(treeFiles)) return [];
+    return treeFiles
+      .filter((f: any) => {
+        const fileName = f.path.split('/').pop()?.toLowerCase() || '';
+        // Skip common non-dockerfile configuration files
+        if (
+          fileName.includes('dockerignore') ||
+          fileName.includes('compose') ||
+          fileName.includes('caddy')
+        ) {
+          return false;
+        }
+        // Match if filename contains 'docker' or 'dockerfile'
+        const hasDocker = fileName.includes('docker');
+        // Exclude files ending with common config/script/documentation/asset extensions
+        const isCommonExtension = /\.(sh|ya?ml|json|jsx?|tsx?|md|png|jpe?g|gif|svg|css|html|txt)$/.test(
+          fileName
+        );
+        return hasDocker && !isCommonExtension;
+      })
+      .map((f: any) => f.path);
+  }, [treeFiles]);
+
+  // Auto-detect and recommend buildpack based on detectedDockerfiles
+  useEffect(() => {
+    if (detectedDockerfiles.length > 0) {
+      setCoolifyBuildPack('dockerfile');
+    } else {
+      setCoolifyBuildPack('nixpacks');
+    }
+  }, [detectedDockerfiles]);
+
+  // Handle Dockerfile and Base Directory defaults when Dockerfile is selected
+  useEffect(() => {
+    if (coolifyBuildPack === 'dockerfile') {
+      if (detectedDockerfiles.length > 0) {
+        const firstDockerfile = detectedDockerfiles[0];
+        setCoolifyDockfilePath(firstDockerfile.startsWith('/') ? firstDockerfile : '/' + firstDockerfile);
+        setCoolifyBaseDirectory('/');
+      } else {
+        setCoolifyDockfilePath('/Dockerfile');
+        setCoolifyBaseDirectory('/');
+      }
+    } else {
+      setCoolifyBaseDirectory('/');
+    }
+  }, [coolifyBuildPack, detectedDockerfiles]);
 
   const triggerDeployMutation = useMutation({
     mutationFn: (payload: {
@@ -189,11 +367,13 @@ export default function ProjectDetailPage() {
       environmentId: string;
       providerId: string;
       branch: string;
+      coolifyAppUuid?: string;
     }) =>
       deploymentsApi.trigger(payload.serviceId, {
         environmentId: payload.environmentId,
         providerId: payload.providerId,
         branch: payload.branch,
+        coolifyAppUuid: payload.coolifyAppUuid,
       }),
     onSuccess: (newDep: any) => {
       toast({
@@ -213,6 +393,151 @@ export default function ProjectDetailPage() {
       });
     },
   });
+
+  const openDeployModal = (svc: any) => {
+    setServiceToDeploy(svc);
+    setDeployBranch(svc.branch);
+
+    // Load config from localStorage if available
+    const saved = localStorage.getItem(`hallo:deploy-config:${svc.id}`);
+    if (saved) {
+      try {
+        const config = JSON.parse(saved);
+        setDeployEnvId(config.envId);
+        setDeployProviderId(config.providerId);
+        setSelectedCoolifyAppUuid(config.coolifyAppUuid);
+      } catch (e) {
+        setDeployEnvId(proj?.environments?.[0]?.id ?? '');
+        setDeployProviderId(
+          ((providersData as any[]) ?? []).find((p: any) => p.type === 'COOLIFY')?.id ?? '',
+        );
+        setSelectedCoolifyAppUuid('');
+      }
+    } else {
+      setDeployEnvId(proj?.environments?.[0]?.id ?? '');
+      setDeployProviderId(
+        ((providersData as any[]) ?? []).find((p: any) => p.type === 'COOLIFY')?.id ?? '',
+      );
+      setSelectedCoolifyAppUuid('');
+    }
+
+    setCoolifyAppName(svc.name);
+    setAutoCreateCoolifyApp(false);
+    setShowRepoTree(false);
+    setDeployDialogOpen(true);
+  };
+
+  const handleStartDeploy = async () => {
+    setIsDeploying(true);
+    try {
+      let finalAppUuid = selectedCoolifyAppUuid;
+      let finalAppName = '';
+
+      if (autoCreateCoolifyApp) {
+        if (!coolifyServerUuid) {
+          toast({
+            title: 'Validasi Gagal',
+            description: 'Silakan pilih Server Coolify terlebih dahulu.',
+            variant: 'destructive',
+          });
+          setIsDeploying(false);
+          return;
+        }
+        if (!coolifyProjectUuid || !coolifyEnvName) {
+          toast({
+            title: 'Validasi Gagal',
+            description: 'Silakan pilih Project & Env Coolify terlebih dahulu.',
+            variant: 'destructive',
+          });
+          setIsDeploying(false);
+          return;
+        }
+        toast({
+          title: 'Membuat Aplikasi...',
+          description: 'Sedang membuat resource aplikasi baru di Coolify...',
+        });
+
+        const createdApp = await providersApi.createCoolifyApplication(deployProviderId, {
+          name: coolifyAppName,
+          projectUuid: coolifyProjectUuid,
+          environmentName: coolifyEnvName,
+          serverUuid: coolifyServerUuid,
+          gitRepository:
+            serviceToDeploy?.repository?.url ||
+            (serviceToDeploy?.repository?.fullName
+              ? `https://github.com/${serviceToDeploy.repository.fullName}`
+              : ''),
+          gitBranch: deployBranch,
+          githubAppUuid: coolifyGithubAppUuid || undefined,
+          buildPack: coolifyBuildPack,
+          portsExposes: coolifyExposedPort,
+          dockerfilePath: coolifyBuildPack === 'dockerfile' ? coolifyDockfilePath : undefined,
+          baseDirectory: coolifyBuildPack === 'dockerfile' ? coolifyBaseDirectory : undefined,
+        });
+
+        finalAppUuid = createdApp.uuid;
+        finalAppName = createdApp.name;
+        setSelectedCoolifyAppUuid(createdApp.uuid);
+
+        toast({
+          title: 'Aplikasi Dibuat!',
+          description: `Aplikasi "${createdApp.name}" berhasil dibuat di Coolify.`,
+        });
+      }
+
+      const envName = (proj?.environments ?? []).find((e: any) => e.id === deployEnvId)?.name || '';
+      const providerName =
+        ((providersData as any[]) ?? []).find((p: any) => p.id === deployProviderId)?.name || '';
+
+      localStorage.setItem(
+        `hallo:deploy-config:${serviceToDeploy.id}`,
+        JSON.stringify({
+          envId: deployEnvId,
+          providerId: deployProviderId,
+          coolifyAppUuid: finalAppUuid,
+          envName,
+          providerName,
+          coolifyAppName:
+            finalAppName ||
+            (coolifyApps ?? []).find((a: any) => a.uuid === finalAppUuid)?.name ||
+            '',
+        }),
+      );
+
+      setServiceConfigs((prev) => ({
+        ...prev,
+        [serviceToDeploy.id]: {
+          envId: deployEnvId,
+          providerId: deployProviderId,
+          coolifyAppUuid: finalAppUuid,
+          envName,
+          providerName,
+          coolifyAppName:
+            finalAppName ||
+            (coolifyApps ?? []).find((a: any) => a.uuid === finalAppUuid)?.name ||
+            '',
+        },
+      }));
+
+      triggerDeployMutation.mutate({
+        serviceId: serviceToDeploy.id,
+        environmentId: deployEnvId,
+        providerId: deployProviderId,
+        branch: deployBranch,
+        coolifyAppUuid: finalAppUuid || undefined,
+      });
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.message || err.message || 'Failed to trigger deployment';
+      toast({
+        title: 'Deployment Gagal',
+        description: errMsg,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeploying(false);
+    }
+  };
 
   const createBranchMutation = useMutation({
     mutationFn: (payload: { name: string; fromBranch: string }) =>
@@ -552,7 +877,26 @@ export default function ProjectDetailPage() {
               <TableBody>
                 {svcList.map((svc: any) => (
                   <TableRow key={svc.id}>
-                    <TableCell className="font-medium">{svc.name}</TableCell>
+                    <TableCell className="font-medium py-3">
+                      <div>{svc.name}</div>
+                      {serviceConfigs[svc.id] ? (
+                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-emerald-600 dark:text-emerald-500 font-medium bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 px-2 py-0.5 rounded-full w-fit">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>
+                            Target: {serviceConfigs[svc.id].envName} pada{' '}
+                            {serviceConfigs[svc.id].providerName} (
+                            {serviceConfigs[svc.id].coolifyAppName || 'Aplikasi Terdeteksi'})
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground font-medium bg-muted/40 border border-muted/50 px-2 py-0.5 rounded-full w-fit">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                          <span>
+                            Belum Dikonfigurasi (Klik ikon gerigi untuk mengatur target default)
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {svc.repository?.fullName ?? '—'}
                     </TableCell>
@@ -565,20 +909,20 @@ export default function ProjectDetailPage() {
                         size="sm"
                         variant="outline"
                         className="h-8 gap-1 text-primary hover:text-primary hover:bg-primary/5 border-primary/20"
-                        onClick={() => {
-                          setServiceToDeploy(svc);
-                          setDeployBranch(svc.branch);
-                          setDeployEnvId(proj?.environments?.[0]?.id ?? '');
-                          setDeployProviderId(
-                            ((providersData as any[]) ?? []).find((p: any) => p.type === 'COOLIFY')
-                              ?.id ?? '',
-                          );
-                          setDeployDialogOpen(true);
-                        }}
+                        onClick={() => openDeployModal(svc)}
                         title="Deploy Service"
                       >
                         <Rocket className="h-3 w-3.5 text-primary" />
                         <span>Deploy</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                        onClick={() => openDeployModal(svc)}
+                        title="Configure Deploy Settings"
+                      >
+                        <Settings className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -966,20 +1310,22 @@ export default function ProjectDetailPage() {
 
       {/* Deploy Service Dialog */}
       <Dialog open={deployDialogOpen} onOpenChange={setDeployDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0 bg-background/50 backdrop-blur-md">
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
               <Rocket className="h-5 w-5 text-primary" />
               <span>Deploy Service: {serviceToDeploy?.name}</span>
             </DialogTitle>
           </DialogHeader>
 
           {(() => {
-            const coolifyProviders = (providersData ?? []).filter((p: any) => p.type === 'COOLIFY');
+            const coolifyProviders = ((providersData as any[]) ?? []).filter(
+              (p: any) => p.type === 'COOLIFY',
+            );
 
             if (coolifyProviders.length === 0) {
               return (
-                <div className="space-y-4 py-2">
+                <div className="p-6 space-y-6 flex-1 flex flex-col justify-center">
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-600 flex gap-2">
                     <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
                     <div>
@@ -990,7 +1336,7 @@ export default function ProjectDetailPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-2 border-t">
                     <Button variant="outline" onClick={() => setDeployDialogOpen(false)}>
                       Cancel
                     </Button>
@@ -1008,64 +1354,505 @@ export default function ProjectDetailPage() {
             }
 
             return (
-              <div className="space-y-4 py-2">
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Target Environment</Label>
-                  <select
-                    className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                    value={deployEnvId}
-                    onChange={(e) => setDeployEnvId(e.target.value)}
-                  >
-                    {(proj?.environments ?? []).map((env: any) => (
-                      <option key={env.id} value={env.id}>
-                        {env.name} {env.branch ? `(branch: ${env.branch})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-muted-foreground">
-                    Define variables and routing specific to this environment.
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Coolify Target Server</Label>
-                  <select
-                    className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                    value={deployProviderId}
-                    onChange={(e) => setDeployProviderId(e.target.value)}
-                  >
-                    {coolifyProviders.map((prov: any) => (
-                      <option key={prov.id} value={prov.id}>
-                        {prov.name} ({prov.config?.apiUrl ?? 'API target'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Source Branch</Label>
-                  {isLoadingBranches ? (
-                    <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <span>Fetching branches from GitHub...</span>
+              <>
+                {/* Scrollable Form Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[calc(85vh-160px)]">
+                  {/* Step 1: Target Environment */}
+                  <div className="space-y-3 relative pl-8 border-l border-muted pb-4">
+                    <div className="absolute left-0 top-0 -translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 border border-primary text-xs font-bold text-primary">
+                      1
                     </div>
-                  ) : (
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">
+                        Langkah 1: Pilih Lingkungan (Environment)
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Tentukan ke lingkungan mana aplikasi ini akan dideploy (misalnya:
+                        Production, Staging, atau Development).
+                      </p>
+                    </div>
                     <select
-                      className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                      value={deployBranch}
-                      onChange={(e) => setDeployBranch(e.target.value)}
+                      className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                      value={deployEnvId}
+                      onChange={(e) => setDeployEnvId(e.target.value)}
                     >
-                      {(branches ?? []).map((b: any) => (
-                        <option key={b.name} value={b.name}>
-                          {b.name} {b.isDefault ? '(default)' : ''}
+                      {(proj?.environments ?? []).map((env: any) => (
+                        <option key={env.id} value={env.id}>
+                          {env.name} {env.branch ? `(branch default: ${env.branch})` : ''}
                         </option>
                       ))}
                     </select>
-                  )}
+                  </div>
+
+                  {/* Step 2: Coolify Server & Application */}
+                  <div className="space-y-3 relative pl-8 border-l border-muted pb-4">
+                    <div className="absolute left-0 top-0 -translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 border border-primary text-xs font-bold text-primary">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">
+                        Langkah 2: Hubungkan dengan Coolify
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Pilih server tujuan Anda dan hubungkan ke aplikasi Coolify (atau buat baru
+                        secara otomatis).
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Server Target
+                        </Label>
+                        <select
+                          className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                          value={deployProviderId}
+                          onChange={(e) => setDeployProviderId(e.target.value)}
+                        >
+                          {coolifyProviders.map((prov: any) => (
+                            <option key={prov.id} value={prov.id}>
+                              {prov.name} ({prov.config?.apiUrl ?? 'API target'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center justify-between border p-3 rounded-lg bg-background shadow-sm mt-2">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs font-semibold text-foreground">
+                            Buat Aplikasi Baru di Coolify
+                          </Label>
+                          <p className="text-[10px] text-muted-foreground">
+                            Buat aplikasi baru secara otomatis dari kosong di Coolify menggunakan
+                            panel ini.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          checked={autoCreateCoolifyApp}
+                          onChange={(e) => setAutoCreateCoolifyApp(e.target.checked)}
+                        />
+                      </div>
+
+                      {!autoCreateCoolifyApp ? (
+                        <div className="space-y-1 mt-2">
+                          <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Aplikasi di Coolify
+                          </Label>
+                          {isLoadingCoolifyApps ? (
+                            <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              <span>Mengambil daftar aplikasi dari Coolify...</span>
+                            </div>
+                          ) : (
+                            <select
+                              className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                              value={selectedCoolifyAppUuid}
+                              onChange={(e) => setSelectedCoolifyAppUuid(e.target.value)}
+                            >
+                              <option value="">-- Deteksi Otomatis (Auto-detect) --</option>
+                              {(coolifyApps ?? []).map((app: any) => (
+                                <option key={app.uuid} value={app.uuid}>
+                                  {app.name} (
+                                  {app.gitRepository
+                                    ? `${app.gitRepository}:${app.gitBranch || 'main'}`
+                                    : 'Tanpa repository'}
+                                  )
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <p className="text-[10px] text-amber-600 dark:text-amber-500 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20 mt-1 leading-relaxed">
+                            ⚠️ <strong>Penting:</strong> Jika repositori di Coolify Anda berbeda
+                            nama dengan di GitHub, Anda{' '}
+                            <strong>wajib memilih aplikasi yang sesuai</strong> dari dropdown di
+                            atas secara manual agar deploy tidak gagal.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 bg-muted/40 p-4 rounded-lg border border-dashed mt-2">
+                          <div className="text-xs font-semibold text-foreground border-b pb-1">
+                            Konfigurasi Aplikasi Baru Coolify
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[11px] font-semibold text-muted-foreground">
+                              Nama Aplikasi
+                            </Label>
+                            <Input
+                              type="text"
+                              className="h-8 text-xs"
+                              value={coolifyAppName}
+                              onChange={(e) => setCoolifyAppName(e.target.value)}
+                              placeholder="e.g. halloprojects-web"
+                            />
+                            <p className="text-[9px] text-muted-foreground leading-tight">
+                              Nama unik aplikasi Anda di Coolify. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded">hallo-projects-web</code>.
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-semibold text-muted-foreground">
+                                Server
+                              </Label>
+                              <select
+                                className="w-full rounded-md border px-2 py-1.5 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                value={coolifyServerUuid}
+                                onChange={(e) => setCoolifyServerUuid(e.target.value)}
+                              >
+                                <option value="">-- Pilih Server --</option>
+                                {(coolifyServers ?? []).map((s: any) => (
+                                  <option key={s.uuid} value={s.uuid}>
+                                    {s.name} ({s.ip})
+                                  </option>
+                                ))}
+                              </select>
+                              <p className="text-[9px] text-muted-foreground leading-tight">
+                                Target server tujuan deployment Anda di Coolify.
+                              </p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-[11px] font-semibold text-muted-foreground">
+                                  Project & Env
+                                </Label>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsCreatingNewCoolifyProject(!isCreatingNewCoolifyProject);
+                                    setNewCoolifyProjectName((project as any)?.name || '');
+                                  }}
+                                  className="text-[10px] text-primary hover:underline font-medium focus:outline-none"
+                                >
+                                  {isCreatingNewCoolifyProject ? '× Batal' : '+ Buat Project Baru'}
+                                </button>
+                              </div>
+                              {isCreatingNewCoolifyProject ? (
+                                <div className="space-y-1.5 p-2 border rounded bg-muted/20">
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="text"
+                                      value={newCoolifyProjectName}
+                                      onChange={(e) => setNewCoolifyProjectName(e.target.value)}
+                                      placeholder="Nama Project Baru"
+                                      className="flex-1 rounded border px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      disabled={isCreatingProject || !newCoolifyProjectName.trim()}
+                                      onClick={async () => {
+                                        setIsCreatingProject(true);
+                                        try {
+                                          const newProj = await providersApi.createCoolifyProject(
+                                            deployProviderId,
+                                            {
+                                              name: newCoolifyProjectName.trim(),
+                                              description: `Dibuat dari panel Hallo Projects untuk repositori ${(project as any)?.name}`,
+                                            },
+                                          );
+                                          toast({
+                                            title: 'Project Dibuat!',
+                                            description: `Project "${newCoolifyProjectName}" berhasil dibuat di Coolify.`,
+                                          });
+                                          await queryClient.invalidateQueries({
+                                            queryKey: [
+                                              'providers',
+                                              deployProviderId,
+                                              'coolify-projects',
+                                            ],
+                                          });
+                                          setCoolifyProjectUuid(newProj.uuid);
+                                          setCoolifyEnvName('production');
+                                          setIsCreatingNewCoolifyProject(false);
+                                        } catch (err: any) {
+                                          toast({
+                                            title: 'Gagal membuat project',
+                                            description:
+                                              err.response?.data?.message ||
+                                              err.message ||
+                                              'Error tidak diketahui',
+                                            variant: 'destructive',
+                                          });
+                                        } finally {
+                                          setIsCreatingProject(false);
+                                        }
+                                      }}
+                                      className="h-7 text-xs px-2.5"
+                                    >
+                                      {isCreatingProject ? '...' : 'Buat'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <select
+                                  className="w-full rounded-md border px-2 py-1.5 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                  value={
+                                    coolifyProjectUuid && coolifyEnvName
+                                      ? `${coolifyProjectUuid}:${coolifyEnvName}`
+                                      : ''
+                                  }
+                                  onChange={(e) => {
+                                    const [pUuid, envName] = e.target.value.split(':');
+                                    setCoolifyProjectUuid(pUuid || '');
+                                    setCoolifyEnvName(envName || '');
+                                  }}
+                                >
+                                  <option value="">-- Pilih Project --</option>
+                                  {(coolifyProjects ?? []).map((p: any) => (
+                                    <optgroup key={p.uuid} label={p.name}>
+                                      {(p.environments ?? []).map((e: any) => (
+                                        <option
+                                          key={`${p.uuid}:${e.name}`}
+                                          value={`${p.uuid}:${e.name}`}
+                                        >
+                                          {p.name} - {e.name}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  ))}
+                                </select>
+                              )}
+                              <p className="text-[9px] text-muted-foreground leading-tight">
+                                Wadah project dan environment di Coolify untuk mengelompokkan resource.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[11px] font-semibold text-muted-foreground">
+                              Sumber Git / GitHub App
+                            </Label>
+                            <select
+                              className="w-full rounded-md border px-2 py-1.5 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                              value={coolifyGithubAppUuid}
+                              onChange={(e) => setCoolifyGithubAppUuid(e.target.value)}
+                            >
+                              <option value="">-- Public Repository (Tanpa GitHub App) --</option>
+                              {(coolifySources ?? []).map((s: any) => (
+                                <option key={s.uuid} value={s.uuid}>
+                                  {s.name} ({s.type})
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-[9px] text-muted-foreground leading-tight">
+                              Gunakan koneksi GitHub App jika repositori Anda bersifat <strong>Private</strong>.
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
+                                <span>Build Pack</span>
+                                {treeFiles && treeFiles.length > 0 && (
+                                  <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-bold uppercase">
+                                    Rekomendasi:{' '}
+                                    {detectedDockerfiles.length > 0
+                                      ? 'Dockerfile'
+                                      : 'Nixpacks'}
+                                  </span>
+                                )}
+                              </Label>
+                              <select
+                                className="w-full rounded-md border px-2 py-1.5 text-xs bg-background focus:outline-none"
+                                value={coolifyBuildPack}
+                                onChange={(e) => setCoolifyBuildPack(e.target.value)}
+                              >
+                                <option value="nixpacks">Nixpacks</option>
+                                <option value="dockerfile">Dockerfile</option>
+                                <option value="dockerimage">Docker Image</option>
+                              </select>
+                              <p className="text-[9px] text-muted-foreground leading-tight">
+                                <strong>Nixpacks</strong> (deteksi otomatis) atau <strong>Dockerfile</strong> (file kustom).
+                              </p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-semibold text-muted-foreground">
+                                Exposed Port
+                              </Label>
+                              <Input
+                                type="text"
+                                className="h-8 text-xs"
+                                placeholder="3000"
+                                value={coolifyExposedPort}
+                                onChange={(e) => setCoolifyExposedPort(e.target.value)}
+                              />
+                              <p className="text-[9px] text-muted-foreground leading-tight">
+                                Port internal container. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded">3000</code> (Next.js) atau <code className="bg-muted dark:bg-zinc-800 px-1 rounded">80</code>.
+                              </p>
+                            </div>
+                          </div>
+
+                          {coolifyBuildPack === 'dockerfile' && (
+                            <div className="space-y-2 mt-2 bg-muted/30 p-2.5 rounded-md border border-dashed border-zinc-200 dark:border-zinc-800">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                  <Label className="text-[11px] font-semibold text-muted-foreground">
+                                    Dockerfile Path
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    className="h-8 text-[11px] font-mono"
+                                    placeholder="/Dockerfile"
+                                    value={coolifyDockfilePath}
+                                    onChange={(e) => setCoolifyDockfilePath(e.target.value)}
+                                  />
+                                  <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">
+                                    Lokasi Dockerfile dari root. Contoh: <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">/apps/web/Dockerfile</code>.
+                                  </p>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label className="text-[11px] font-semibold text-muted-foreground">
+                                    Base Directory
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    className="h-8 text-[11px] font-mono"
+                                    placeholder="/"
+                                    value={coolifyBaseDirectory}
+                                    onChange={(e) => setCoolifyBaseDirectory(e.target.value)}
+                                  />
+                                  <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">
+                                    Build context directory. Gunakan <code className="bg-muted dark:bg-zinc-800 px-1 rounded font-mono text-[8px]">/</code> jika monorepo.
+                                  </p>
+                                </div>
+                              </div>
+
+                              {detectedDockerfiles.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="text-[9px] text-muted-foreground font-medium block">
+                                    Rekomendasi Dockerfile Terdeteksi (Klik untuk memilih):
+                                  </span>
+                                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                                    {detectedDockerfiles.map((path: string) => {
+                                      const formattedPath = path.startsWith('/') ? path : '/' + path;
+                                      const isSelected = coolifyDockfilePath === formattedPath;
+                                      return (
+                                        <button
+                                          key={path}
+                                          type="button"
+                                          onClick={() => {
+                                            setCoolifyDockfilePath(formattedPath);
+                                            setCoolifyBaseDirectory('/');
+                                          }}
+                                          className={`text-[9px] px-2 py-0.5 rounded border font-mono transition-all ${
+                                            isSelected
+                                              ? 'bg-primary text-primary-foreground border-primary font-bold'
+                                              : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                          }`}
+                                        >
+                                          {path}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 3: Source Branch */}
+                  <div className="space-y-3 relative pl-8 pb-2">
+                    <div className="absolute left-0 top-0 -translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 border border-primary text-xs font-bold text-primary">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">
+                        Langkah 3: Pilih Cabang Kode (Branch Git)
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Pilih cabang (branch) kode sumber dari GitHub yang ingin dibangun untuk
+                        dideploy ke server.
+                      </p>
+                      {isLoadingTree ? (
+                        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground bg-muted/30 px-2 py-1 rounded border border-dashed w-fit">
+                          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                          <span>Mendeteksi tech stack...</span>
+                        </div>
+                      ) : (
+                        treeFiles &&
+                        treeFiles.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/10 dark:border-indigo-500/20 px-2 py-1 rounded-full w-fit">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                            <span>
+                              Tech Stack Terdeteksi:{' '}
+                              {detectTechStack(treeFiles) || 'Static HTML / Web'}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    {isLoadingBranches ? (
+                      <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <span>Mengambil daftar cabang dari GitHub...</span>
+                      </div>
+                    ) : (
+                      <select
+                        className="w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                        value={deployBranch}
+                        onChange={(e) => setDeployBranch(e.target.value)}
+                      >
+                        {(branches ?? []).map((b: any) => (
+                          <option key={b.name} value={b.name}>
+                            {b.name} {b.isDefault ? '(utama)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Repository structure toggle inside scrollable form */}
+                  <div className="border rounded-lg bg-muted/20">
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between p-3 text-xs font-semibold hover:bg-muted/40 transition-colors"
+                      onClick={() => setShowRepoTree(!showRepoTree)}
+                    >
+                      <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                        <FolderTree className="h-4 w-4 text-primary" />
+                        <span>Lihat Struktur File Repository</span>
+                      </span>
+                      {showRepoTree ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {showRepoTree && (
+                      <div className="border-t p-3 max-h-60 overflow-y-auto space-y-1 bg-background rounded-b-lg">
+                        {isLoadingTree ? (
+                          <div className="flex items-center gap-2 py-4 justify-center text-xs text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span>Memuat file repository...</span>
+                          </div>
+                        ) : !treeFiles || treeFiles.length === 0 ? (
+                          <div className="text-center py-4 text-xs text-muted-foreground">
+                            Repository kosong atau tidak ada file ditemukan.
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {buildTree(treeFiles).map((node) => (
+                              <FileNode key={node.path} node={node} level={0} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="pt-3 border-t flex flex-col gap-2">
-                  <div className="text-[11px] text-muted-foreground p-3 rounded-lg bg-muted/40 border space-y-1">
+                {/* Fixed Footer Actions */}
+                <div className="p-6 border-t bg-muted/20 flex-shrink-0 flex flex-col gap-3">
+                  <div className="text-[11px] text-muted-foreground p-3 rounded-lg bg-background border space-y-1">
                     <div className="flex justify-between">
                       <span>Service:</span>
                       <span className="font-semibold text-foreground">{serviceToDeploy?.name}</span>
@@ -1078,38 +1865,43 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full gap-2 mt-1"
-                    onClick={() => {
-                      triggerDeployMutation.mutate({
-                        serviceId: serviceToDeploy.id,
-                        environmentId: deployEnvId,
-                        providerId: deployProviderId,
-                        branch: deployBranch,
-                      });
-                    }}
-                    disabled={
-                      triggerDeployMutation.isPending ||
-                      isLoadingBranches ||
-                      !deployEnvId ||
-                      !deployProviderId ||
-                      !deployBranch
-                    }
-                  >
-                    {triggerDeployMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Deploying to Coolify...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="h-4 w-4" />
-                        <span>Deploy Now</span>
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 py-5 text-sm font-semibold"
+                      onClick={() => setDeployDialogOpen(false)}
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      className="flex-[2] gap-2 py-5 text-sm font-semibold shadow-md"
+                      onClick={handleStartDeploy}
+                      disabled={
+                        isDeploying ||
+                        triggerDeployMutation.isPending ||
+                        isLoadingBranches ||
+                        !deployEnvId ||
+                        !deployProviderId ||
+                        !deployBranch
+                      }
+                    >
+                      {isDeploying || triggerDeployMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>
+                            {isDeploying ? 'Menyiapkan Aplikasi...' : 'Sedang Memulai Deploy...'}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="h-4 w-4" />
+                          <span>Mulai Deploy Sekarang</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </>
             );
           })()}
         </DialogContent>
@@ -1496,4 +2288,173 @@ function VariablesTab({ projectId, environments }: { projectId: string; environm
       </Dialog>
     </div>
   );
+}
+
+interface TreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  size?: number;
+  children: TreeNode[];
+}
+
+function buildTree(files: { path: string; type: 'file' | 'dir'; size?: number }[]): TreeNode[] {
+  const root: TreeNode[] = [];
+  const map: Record<string, TreeNode> = {};
+
+  const sortedFiles = [...files].sort(
+    (a, b) => a.path.split('/').length - b.path.split('/').length,
+  );
+
+  for (const file of sortedFiles) {
+    const parts = file.path.split('/');
+    const node: TreeNode = {
+      name: parts[parts.length - 1],
+      path: file.path,
+      type: file.type,
+      size: file.size,
+      children: [],
+    };
+
+    map[file.path] = node;
+
+    if (parts.length === 1) {
+      root.push(node);
+    } else {
+      const parentPath = parts.slice(0, -1).join('/');
+      const parent = map[parentPath];
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        root.push(node);
+      }
+    }
+  }
+
+  const sortTree = (nodes: TreeNode[]) => {
+    nodes.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === 'dir' ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    for (const node of nodes) {
+      if (node.children.length > 0) {
+        sortTree(node.children);
+      }
+    }
+  };
+
+  sortTree(root);
+  return root;
+}
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function FileNode({ node, level = 0 }: { node: TreeNode; level: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isDir = node.type === 'dir';
+
+  return (
+    <div className="select-none">
+      <div
+        className={cn(
+          'flex items-center gap-1.5 py-1 px-2 hover:bg-muted/50 rounded-md cursor-pointer text-xs transition-colors',
+          isDir ? 'text-foreground font-medium' : 'text-muted-foreground',
+        )}
+        style={{ paddingLeft: `${level * 16 + 8}px` }}
+        onClick={() => isDir && setIsOpen(!isOpen)}
+      >
+        {isDir ? (
+          <>
+            {isOpen ? (
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/70" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/70" />
+            )}
+            <Folder className="h-3.5 w-3.5 text-amber-500 fill-amber-500/20" />
+          </>
+        ) : (
+          <>
+            <span className="w-3.5" />
+            <FileCode className="h-3.5 w-3.5 text-blue-500/80" />
+          </>
+        )}
+        <span className="truncate">{node.name}</span>
+        {!isDir && node.size !== undefined && (
+          <span className="text-[10px] text-muted-foreground/60 ml-auto">
+            {formatBytes(node.size)}
+          </span>
+        )}
+      </div>
+      {isDir && isOpen && node.children.length > 0 && (
+        <div className="mt-0.5">
+          {node.children.map((child) => (
+            <FileNode key={child.path} node={child} level={level + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function detectTechStack(files: { path: string; type: 'file' | 'dir'; size?: number }[]) {
+  if (!files || files.length === 0) return null;
+  const fileNames = files.map((f) => {
+    const parts = f.path.split('/');
+    return parts[parts.length - 1].toLowerCase();
+  });
+
+  if (
+    fileNames.includes('next.config.js') ||
+    fileNames.includes('next.config.mjs') ||
+    fileNames.includes('next.config.ts')
+  ) {
+    return 'Next.js';
+  }
+  if (fileNames.includes('nuxt.config.js') || fileNames.includes('nuxt.config.ts')) {
+    return 'Nuxt.js (Vue)';
+  }
+  if (fileNames.includes('svelte.config.js') || fileNames.includes('svelte.config.ts')) {
+    return 'SvelteKit';
+  }
+  if (fileNames.includes('angular.json')) {
+    return 'Angular';
+  }
+  if (fileNames.includes('vite.config.js') || fileNames.includes('vite.config.ts')) {
+    return 'Vite (React/Vue/Svelte)';
+  }
+  if (fileNames.includes('package.json')) {
+    return 'Node.js / React';
+  }
+  if (
+    fileNames.includes('requirements.txt') ||
+    fileNames.includes('pipfile') ||
+    fileNames.includes('pyproject.toml')
+  ) {
+    return 'Python';
+  }
+  if (fileNames.includes('go.mod')) {
+    return 'Go (Golang)';
+  }
+  if (fileNames.includes('composer.json')) {
+    return 'PHP (Laravel)';
+  }
+  if (fileNames.includes('gemfile')) {
+    return 'Ruby on Rails';
+  }
+  if (fileNames.includes('cargo.toml')) {
+    return 'Rust';
+  }
+  if (fileNames.includes('pom.xml') || fileNames.includes('build.gradle')) {
+    return 'Java / Spring Boot';
+  }
+  return 'Static HTML / Web';
 }

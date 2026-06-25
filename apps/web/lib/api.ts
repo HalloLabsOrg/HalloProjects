@@ -18,6 +18,26 @@ export const providersApi = {
   test: (id: string) =>
     apiClient.post<{ data: unknown }>(`/api/providers/${id}/test`).then((r) => r.data.data),
   remove: (id: string) => apiClient.delete(`/api/providers/${id}`),
+  listCoolifyApplications: (id: string) =>
+    apiClient
+      .get<{ data: any[] }>(`/api/providers/${id}/coolify/applications`)
+      .then((r) => r.data.data),
+  listCoolifyServers: (id: string) =>
+    apiClient.get<{ data: any[] }>(`/api/providers/${id}/coolify/servers`).then((r) => r.data.data),
+  listCoolifyProjects: (id: string) =>
+    apiClient
+      .get<{ data: any[] }>(`/api/providers/${id}/coolify/projects`)
+      .then((r) => r.data.data),
+  listCoolifySources: (id: string) =>
+    apiClient.get<{ data: any[] }>(`/api/providers/${id}/coolify/sources`).then((r) => r.data.data),
+  createCoolifyApplication: (id: string, payload: any) =>
+    apiClient
+      .post<{ data: any }>(`/api/providers/${id}/coolify/applications`, payload)
+      .then((r) => r.data.data),
+  createCoolifyProject: (id: string, payload: any) =>
+    apiClient
+      .post<{ data: any }>(`/api/providers/${id}/coolify/projects`, payload)
+      .then((r) => r.data.data),
   getGithubAppStatus: () =>
     apiClient
       .get<{
@@ -60,6 +80,10 @@ export const repositoriesApi = {
       .then((r) => r.data),
   branches: (id: string) =>
     apiClient.get<{ data: unknown[] }>(`/api/repositories/${id}/branches`).then((r) => r.data.data),
+  tree: (id: string, branch: string) =>
+    apiClient
+      .get<{ data: any[] }>(`/api/repositories/${id}/tree`, { params: { branch } })
+      .then((r) => r.data.data),
   createBranch: (id: string, payload: { name: string; fromBranch: string }) =>
     apiClient
       .post<{ data: any }>(`/api/repositories/${id}/branches`, payload)

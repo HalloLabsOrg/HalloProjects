@@ -19,4 +19,9 @@ export class TriggerDeployDto {
   @IsString()
   @IsOptional()
   commitSha?: string;
+
+  @ApiPropertyOptional({ example: 'vilpjxmdro2zgbz74nsaplp8' })
+  @IsString()
+  @IsOptional()
+  coolifyAppUuid?: string;
 }

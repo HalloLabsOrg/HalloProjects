@@ -60,4 +60,12 @@ export interface Application {
   name: string;
   fqdn?: string;
   status: string;
+  gitRepository?: string;
+  gitBranch?: string;
+}
+
+export interface RepositoryFile {
+  path: string;
+  type: 'file' | 'dir';
+  size?: number;
 }

@@ -60,6 +60,28 @@ try {
   execSync('docker compose -f docker/docker-compose.dev.yml up -d --remove-orphans', {
     stdio: 'inherit',
   });
+
+  console.log('⏳ Waiting for Postgres database to be ready...');
+  let retries = 15;
+  while (retries > 0) {
+    try {
+      execSync(
+        'docker compose -f docker/docker-compose.dev.yml exec -T postgres psql -U hallo -d hallo_projects -c "SELECT 1"',
+        {
+          stdio: 'ignore',
+        },
+      );
+      console.log('✅ Postgres is fully ready and accepting queries!');
+      break;
+    } catch (e) {
+      retries--;
+      if (retries === 0) {
+        console.warn('⚠️ Postgres took too long to start, proceeding anyway...');
+      } else {
+        execSync('sleep 1');
+      }
+    }
+  }
 } catch (err) {
   console.error('❌ Failed to start docker-compose containers:', err.message);
 }
@@ -152,8 +174,9 @@ const cleanup = () => {
     console.error('❌ Failed to stop docker-compose containers:', err.message);
   }
 
-  // Clean all build/development caches
-  cleanCaches();
+  // We keep caches so that dev server starts faster next time and IDE types (.next/types) are preserved.
+  // If you need to clean cache, run it manually or add a clean script.
+  // cleanCaches();
 };
 
 // When devProcess's stdio streams are fully closed, perform cleanup and exit
