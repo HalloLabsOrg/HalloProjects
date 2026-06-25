@@ -23,14 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useMemo } from 'react';
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  SUCCESS: 'default',
-  FAILED: 'destructive',
-  CANCELLED: 'outline',
-  PENDING: 'secondary',
-  BUILDING: 'secondary',
-  DEPLOYING: 'secondary',
-};
+
 
 const STATUS_CONFIG: Record<
   string,
