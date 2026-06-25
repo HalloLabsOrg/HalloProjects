@@ -19,6 +19,7 @@
     "@hallo/coolify-provider": "workspace:*",
     "@hallo/github-provider": "workspace:*",
     "@hallo/sdk": "workspace:*",
+    "@hallo/shared": "workspace:*",
     "@hallo/templates": "workspace:*",
     "@nestjs/bull": "^10.2.1",
     "@nestjs/common": "^10.4.15",

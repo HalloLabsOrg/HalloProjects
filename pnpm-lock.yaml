@@ -48,6 +48,9 @@ importers:
       '@hallo/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@hallo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@hallo/templates':
         specifier: workspace:*
         version: link:../../packages/templates
